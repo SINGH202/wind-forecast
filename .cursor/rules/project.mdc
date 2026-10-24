@@ -1,0 +1,62 @@
+---
+description: Wind forecast portal project rules
+alwaysApply: true
+---
+
+# Project
+Web app for a UK energy utility's day-ahead power buying team. It shows the latest
+wind forecast available at decision time and quantifies forecast accuracy.
+Data: Elexon BMRS only. FUELHH (actuals, fuelType == WIND) and WINDFOR (forecasts).
+Scope: delivery days in January 2026.
+
+# Stack
+- Backend: Python 3.11, FastAPI, pandas, pydantic v2, httpx, pytest, ruff
+- Frontend: React + Vite + TypeScript, Recharts, TanStack Query
+- Packaging: Docker (backend, frontend via nginx), docker-compose
+
+# Domain rules (critical)
+- Decisions for delivery day D are made on day D-1. A decision forecast for a target
+  startTime is the row with the MAX publishTime that is <= the decision cutoff.
+  Never use a forecast published after the cutoff (no look-ahead leakage).
+- Default cutoff: D-1 09:00 Europe/London, configurable via settings and query param.
+- horizon_hours = startTime - publishTime.
+- All timestamps are stored and computed in UTC. Convert to Europe/London only for
+  cutoff construction and display.
+- Missing data must be flagged explicitly in outputs, never silently dropped or filled.
+- We have no demand data. Do not claim to compute residual demand. Use "firm wind"
+  (forecast minus an error quantile) instead.
+
+# Ground truth
+- Real API responses live in docs/samples/. Never invent field names, endpoints or
+  parameters. If unsure, read docs/samples/ or ask me to check the BMRS docs.
+- Product requirements live in docs/PRD.md. Follow them.
+
+# Code structure
+- backend/app/clients/   Elexon HTTP client only, no business logic
+- backend/app/services/  all business logic (cutoff, horizon, metrics). Pure functions
+                         on DataFrames where possible.
+- backend/app/api/       thin FastAPI routes, typed request and response models
+- backend/app/ingest.py  CLI entry point (python -m app.ingest)
+- backend/tests/         pytest, mirrors app structure
+- frontend/src/api/      typed API client
+- frontend/src/features/ one folder per tab (decision, explorer, accuracy)
+- frontend/src/components/ shared UI (states, KPI card, chart wrappers)
+
+# Quality bar
+- Every function in services/ has a pytest test with a small hand-built DataFrame.
+- Write tests before implementation for cutoff and horizon logic.
+- Type hints on all Python functions. No `any` in TypeScript.
+- No business logic in route handlers or React components.
+- Every UI view has loading, empty and error states.
+- Run `ruff check`, `pytest` and `npm run lint` before declaring a task done.
+
+# Working style
+- Make small, reviewable changes. One task per commit, message format: type(scope): summary.
+- Explain non-obvious decisions in a short code comment, not a long essay.
+- Do not add dependencies without saying why.
+- Do not touch files outside the task. List files you changed at the end.
+- Never include personal names, emails or usernames in code, configs or docs.
+
+# Visual style
+- Utility-friendly, clean, minimal. Colours: actual = solid dark, forecast = dashed blue,
+  uncertainty band = light blue shaded. Units always shown (MW or MWh).
