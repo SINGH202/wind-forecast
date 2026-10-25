@@ -18,10 +18,6 @@ const MONTHS = [
   'Dec',
 ] as const
 
-const numberFormat = new Intl.NumberFormat('en-GB', {
-  maximumFractionDigits: 1,
-})
-
 export type DecisionPoint = DecisionResponse['points'][number]
 
 export type DecisionChartRow = {
@@ -133,13 +129,6 @@ export function ageSpread(points: readonly DecisionPoint[]): AgeSpread {
       ? (upper ?? null)
       : (lower + upper) / 2
   return { median, oldest: ages[ages.length - 1] ?? null }
-}
-
-export function formatNumber(value: number | null): string {
-  if (value === null) {
-    return '—'
-  }
-  return numberFormat.format(value)
 }
 
 export function isDecisionRow(value: unknown): value is DecisionChartRow {

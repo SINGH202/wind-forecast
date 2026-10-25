@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 
+import { formatPercent } from '../../design/format.ts'
 import {
-  formatPercent,
   histogramCaption,
   horizonAccuracyCaption,
   horizonRows,

@@ -7,13 +7,12 @@ import { ErrorState } from '../../components/ErrorState.tsx'
 import { KpiCard } from '../../components/KpiCard.tsx'
 import { LoadingState } from '../../components/LoadingState.tsx'
 import { Typography } from '../../components/Typography.tsx'
+import { formatMw, formatPercent } from '../../design/format.ts'
 import { color, space } from '../../design/tokens.ts'
 import { AccuracyCharts } from './AccuracyCharts.tsx'
 import {
   clampDay,
   coverageBounds,
-  formatNumber,
-  formatPercent,
   fullCoverageRange,
   hasMae,
   initialCutoff,
@@ -161,11 +160,11 @@ function MetricsBody({
         <Typography variant="small">Loading wind data.</Typography>
       ) : null}
       <div className={`flex flex-wrap ${space.md}`}>
-        <KpiCard label="MAE" value={formatNumber(data.mae_mw)} unit="MW" />
-        <KpiCard label="RMSE" value={formatNumber(data.rmse_mw)} unit="MW" />
+        <KpiCard label="MAE" value={formatMw(data.mae_mw)} unit="MW" />
+        <KpiCard label="RMSE" value={formatMw(data.rmse_mw)} unit="MW" />
         <KpiCard
           label="Bias"
-          value={formatNumber(data.bias_mw, true)}
+          value={formatMw(data.bias_mw, true)}
           unit="MW"
           hint={biasHint}
         />

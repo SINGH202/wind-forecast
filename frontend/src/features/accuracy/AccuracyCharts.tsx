@@ -13,10 +13,10 @@ import {
 import { ChartCard } from '../../components/ChartCard.tsx'
 import { EmptyState } from '../../components/EmptyState.tsx'
 import { Typography } from '../../components/Typography.tsx'
+import { formatMw } from '../../design/format.ts'
 import { chartStroke, color, space } from '../../design/tokens.ts'
 import type { MetricsResponse } from '../../api/client.ts'
 import {
-  formatNumber,
   hasMae,
   histogramCaption,
   histogramRows,
@@ -142,7 +142,8 @@ function GroupedBars({ rows }: { rows: BarRow[] }) {
             />
             <YAxis
               tick={axisTick}
-              width={56}
+              width={64}
+              tickFormatter={(value: number) => formatMw(value)}
               tickLine={false}
               axisLine={false}
               label={mwLabel}
@@ -194,7 +195,8 @@ function MaeBars({
           />
           <YAxis
             tick={axisTick}
-            width={56}
+            width={64}
+            tickFormatter={(value: number) => formatMw(value)}
             tickLine={false}
             axisLine={false}
             label={mwLabel}
@@ -366,12 +368,12 @@ function WorstDays({ rows }: { rows: WorstDay[] }) {
                   </td>
                   <td className="py-2 pr-3">
                     <Typography variant="bodyMedium">
-                      {formatNumber(row.mae_mw)}
+                      {formatMw(row.mae_mw)}
                     </Typography>
                   </td>
                   <td className="py-2 pr-3">
                     <Typography variant="bodyMedium">
-                      {formatNumber(row.bias_mw, true)}
+                      {formatMw(row.bias_mw, true)}
                     </Typography>
                   </td>
                   <td className="py-2">
@@ -461,9 +463,9 @@ function BarTooltip({
     <div className={`rounded-md border ${color.line} ${color.paper} px-3 py-2`}>
       <div className={space.stack}>
         <Typography variant="small">{row.label}</Typography>
-        <Typography variant="bodyMedium">{`MAE ${formatNumber(row.maeMw)} MW`}</Typography>
+        <Typography variant="bodyMedium">{`MAE ${formatMw(row.maeMw)} MW`}</Typography>
         <Typography variant="bodyMedium">
-          {`Bias ${formatNumber(row.biasMw, true)} MW`}
+          {`Bias ${formatMw(row.biasMw, true)} MW`}
         </Typography>
       </div>
     </div>

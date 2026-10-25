@@ -10,9 +10,9 @@ import {
 } from 'recharts'
 
 import { Typography } from '../../components/Typography.tsx'
+import { formatMw } from '../../design/format.ts'
 import { chart, chartStroke, color, space } from '../../design/tokens.ts'
 import {
-  formatNumber,
   isDecisionRow,
   toDecisionRows,
   type DecisionPoint,
@@ -64,7 +64,8 @@ export function DecisionChart({ points, showBand }: DecisionChartProps) {
             />
             <YAxis
               tick={axisTick}
-              width={56}
+              width={64}
+              tickFormatter={(value: number) => formatMw(value)}
               tickLine={false}
               axisLine={false}
               label={{
@@ -131,18 +132,18 @@ function DecisionTooltip({
   }
   const band =
     showBand && row.band
-      ? `${formatNumber(row.band[0])}–${formatNumber(row.band[1])} MW`
+      ? `${formatMw(row.band[0])}–${formatMw(row.band[1])} MW`
       : '—'
   return (
     <div className={`rounded-md border ${color.line} ${color.paper} px-3 py-2`}>
       <div className={space.stack}>
         <Typography variant="small">{row.time}</Typography>
         <Typography variant="bodyMedium">
-          {`Forecast ${formatNumber(row.forecastMw)} MW`}
+          {`Forecast ${formatMw(row.forecastMw)} MW`}
         </Typography>
         <Typography variant="bodyMedium">{`Band ${band}`}</Typography>
         <Typography variant="bodyMedium">
-          {`Actual ${formatNumber(row.actualMw)} MW`}
+          {`Actual ${formatMw(row.actualMw)} MW`}
         </Typography>
         <Typography variant="small">
           {row.publishTime

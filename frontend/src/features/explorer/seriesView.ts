@@ -1,4 +1,5 @@
 import type { SeriesResponse } from '../../api/client.ts'
+import { formatMw as formatMwValue } from '../../design/format.ts'
 
 export const DEFAULT_EXPLORER_START = '2026-01-10'
 export const DEFAULT_EXPLORER_END = '2026-01-16'
@@ -18,10 +19,6 @@ const MONTHS = [
   'Nov',
   'Dec',
 ] as const
-
-const mwFormat = new Intl.NumberFormat('en-GB', {
-  maximumFractionDigits: 1,
-})
 
 export type SeriesPoint = SeriesResponse['points'][number]
 
@@ -109,12 +106,9 @@ export function horizonCaption(hours: number): string {
 }
 
 export function formatMw(value: number | null, signed = false): string {
-  if (value === null) {
-    return '—'
-  }
-  const text = mwFormat.format(value)
-  if (signed && value > 0) {
-    return `+${text} MW`
+  const text = formatMwValue(value, signed)
+  if (text === '—') {
+    return text
   }
   return `${text} MW`
 }

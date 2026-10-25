@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts'
 
+import { formatMw as formatMwValue } from '../../design/format.ts'
 import { chart, chartStroke, color, space } from '../../design/tokens.ts'
 import { Typography } from '../../components/Typography.tsx'
 import {
@@ -66,7 +67,8 @@ export function SeriesChart({ points }: SeriesChartProps) {
             />
             <YAxis
               tick={{ fill: chartStroke.muted, fontSize: 12 }}
-              width={56}
+              width={64}
+              tickFormatter={(value: number) => formatMwValue(value)}
               tickLine={false}
               axisLine={false}
               label={{

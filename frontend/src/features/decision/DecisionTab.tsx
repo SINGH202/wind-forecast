@@ -9,13 +9,13 @@ import { InfoPanel } from '../../components/InfoPanel.tsx'
 import { KpiCard } from '../../components/KpiCard.tsx'
 import { LoadingState } from '../../components/LoadingState.tsx'
 import { Typography } from '../../components/Typography.tsx'
+import { formatHours, formatMwh } from '../../design/format.ts'
 import { color, space } from '../../design/tokens.ts'
 import { DecisionChart } from './DecisionChart.tsx'
 import {
   ageSpread,
   cutoffSentence,
   deliveryComplete,
-  formatNumber,
   hasForecast,
   initialCutoff,
   initialDeliveryDay,
@@ -128,7 +128,7 @@ function DecisionBody({
   const ageHint =
     ages.median === null
       ? 'No forecast was published before the cutoff.'
-      : `Median ${formatNumber(ages.median)} h, oldest ${formatNumber(ages.oldest)} h.`
+      : `Median ${formatHours(ages.median)} h, oldest ${formatHours(ages.oldest)} h.`
   const firmHint = data.band_available
     ? firmExplanation
     : `Uncertainty band unavailable: ${data.band_reason ?? 'insufficient history'}.`
@@ -137,20 +137,20 @@ function DecisionBody({
       <div className={`flex flex-wrap ${space.md}`}>
         <KpiCard
           label="Expected energy"
-          value={formatNumber(data.kpis.expected_mwh)}
+          value={formatMwh(data.kpis.expected_mwh)}
           unit="MWh"
           hint={`${data.kpis.half_hours_with_forecast} of ${data.kpis.half_hours_expected} half-hours`}
         />
         <KpiCard
           label="Firm wind (P10)"
-          value={formatNumber(data.kpis.firm_wind_mwh)}
+          value={formatMwh(data.kpis.firm_wind_mwh)}
           unit="MWh"
           hint={firmHint}
           title={firmExplanation}
         />
         <KpiCard
           label="Forecast age"
-          value={formatNumber(data.kpis.forecast_age_hours)}
+          value={formatHours(data.kpis.forecast_age_hours)}
           unit="h"
           hint={ageHint}
           title="Age of the newest forecast used at the cutoff, with the median and oldest of the selected half-hours."
