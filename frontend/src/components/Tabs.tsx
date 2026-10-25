@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
 import { color, space } from '../design/tokens.ts'
 import type { DeskTab } from '../shell/tabs.ts'
@@ -13,16 +13,6 @@ type TabsProps = {
 
 export function Tabs({ active, onSelect }: TabsProps) {
   const buttons = useRef<Partial<Record<DeskTab, HTMLButtonElement | null>>>({})
-  const pendingFocus = useRef<DeskTab | null>(null)
-
-  useEffect(() => {
-    const next = pendingFocus.current
-    if (!next) {
-      return
-    }
-    pendingFocus.current = null
-    buttons.current[next]?.focus()
-  }, [active])
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const index = DESK_TABS.findIndex((tab) => tab.id === active)
@@ -43,7 +33,8 @@ export function Tabs({ active, onSelect }: TabsProps) {
     if (!next || next.id === active) {
       return
     }
-    pendingFocus.current = next.id
+    // Focus during the key event so the browser keeps the visible focus ring.
+    buttons.current[next.id]?.focus()
     onSelect(next.id)
   }
 
