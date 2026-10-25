@@ -86,7 +86,7 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
             aria-valuemax={48}
             aria-valuenow={horizon}
             aria-valuetext={`${horizon} hours`}
-            className="accent-forecast"
+            className={`w-full accent-forecast ${color.focus}`}
             onChange={(event) => setHorizon(Number(event.target.value))}
           />
         </label>

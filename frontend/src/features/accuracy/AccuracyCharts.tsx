@@ -70,7 +70,10 @@ export function AccuracyCharts({ metrics }: ChartsProps) {
           caption={hourCaption(metrics.by_hour_london)}
         >
           {hasMae(metrics.by_hour_london) ? (
-            <MaeBars rows={hourRows(metrics.by_hour_london)} />
+            <MaeBars
+              rows={hourRows(metrics.by_hour_london)}
+              label="Mean absolute error in MW by hour of day, Europe/London."
+            />
           ) : (
             <EmptyState
               message="No wind data for this selection."
@@ -84,7 +87,11 @@ export function AccuracyCharts({ metrics }: ChartsProps) {
           caption={levelCaption(metrics.by_wind_level)}
         >
           {hasMae(metrics.by_wind_level) ? (
-            <MaeBars rows={levelRows(metrics.by_wind_level)} angled />
+            <MaeBars
+              rows={levelRows(metrics.by_wind_level)}
+              angled
+              label="Mean absolute error in MW by actual wind level."
+            />
           ) : (
             <EmptyState
               message="No wind data for this selection."
@@ -124,7 +131,11 @@ function GroupedBars({ rows }: { rows: BarRow[] }) {
   return (
     <div className={space.stack}>
       <SeriesLegend />
-      <div className="h-72 w-full min-w-0 overflow-x-auto">
+      <div
+        className="h-72 w-full min-w-0 overflow-x-auto"
+        role="img"
+        aria-label="Mean absolute error and bias in MW for all forecast vintages, grouped by horizon."
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={rows}
@@ -171,12 +182,18 @@ function GroupedBars({ rows }: { rows: BarRow[] }) {
 function MaeBars({
   rows,
   angled = false,
+  label,
 }: {
   rows: BarRow[]
   angled?: boolean
+  label: string
 }) {
   return (
-    <div className="h-72 w-full min-w-0 overflow-x-auto">
+    <div
+      className="h-72 w-full min-w-0 overflow-x-auto"
+      role="img"
+      aria-label={label}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={rows}
@@ -242,7 +259,11 @@ function Histogram({
           P90
         </Typography>
       </ul>
-      <div className="h-72 w-full min-w-0 overflow-x-auto">
+      <div
+        className="h-72 w-full min-w-0 overflow-x-auto"
+        role="img"
+        aria-label="Half-hours by forecast error in MW, with P10 and P90 marked."
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={rows}

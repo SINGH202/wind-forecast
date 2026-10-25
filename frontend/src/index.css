@@ -1,2 +1,7 @@
 @import 'tailwindcss';
 @import './design/tokens.css';
+
+:focus-visible {
+  outline: 2px solid var(--color-forecast);
+  outline-offset: 2px;
+}

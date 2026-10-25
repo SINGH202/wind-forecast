@@ -49,7 +49,11 @@ export function DecisionChart({ points, showBand }: DecisionChartProps) {
           </Typography>
         ) : null}
       </ul>
-      <div className="h-80 w-full min-w-0 overflow-x-auto">
+      <div
+        className="h-80 w-full min-w-0 overflow-x-auto"
+        role="img"
+        aria-label="Decision forecast in MW. The dashed line is the forecast, the shaded area is the uncertainty band, and the solid line is metered wind."
+      >
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={rows}
