@@ -12,19 +12,29 @@ Scope: delivery days in January 2026.
 # Stack
 - Backend: Python 3.11, FastAPI, pandas, pydantic v2, httpx, pytest, ruff
 - Frontend: React + Vite + TypeScript, Recharts, TanStack Query
-- Packaging: Docker (backend, frontend via nginx), docker-compose
+- Local packaging: docker-compose, with nginx serving the frontend.
+- Production: the frontend is a static Vite build on Vercel. Only the backend runs as a
+  Docker image on Render.
 
 # Domain rules (critical)
 - Decisions for delivery day D are made on day D-1. A decision forecast for a target
   startTime is the row with the MAX publishTime that is <= the decision cutoff.
-  Never use a forecast published after the cutoff (no look-ahead leakage).
-- Default cutoff: D-1 09:00 Europe/London, configurable via settings and query param.
+- "Never use a forecast published after the cutoff" applies to the Decision view and to
+  the decision-forecast error history (band, firm wind, and headline accuracy). It does
+  not apply to Explorer.
+- Explorer selects by horizon: the latest publishTime with horizon_hours >= H. The UI and
+  docs/PRD.md must label Explorer as a horizon view, not as the decision cutoff.
+- The backend default cutoff is the DECISION_CUTOFF_TIME setting (09:00 Europe/London
+  on D-1). The cutoff query parameter must be one of 08:00, 08:30, 09:00, 09:30, 10:00
+  (Europe/London). The API rejects any other value.
 - horizon_hours = startTime - publishTime.
 - All timestamps are stored and computed in UTC. Convert to Europe/London only for
   cutoff construction and display.
 - Missing data must be flagged explicitly in outputs, never silently dropped or filled.
-- We have no demand data. Do not claim to compute residual demand. Use "firm wind"
-  (forecast minus an error quantile) instead.
+- We have no demand data. Do not claim to compute residual demand.
+- error = forecast - actual. Firm wind = forecast - P90(error), which is the P10 of
+  actual wind. Upper band = forecast - P10(error). Both quantiles are computed only from
+  delivery days before the selected day.
 
 # Ground truth
 - Real API responses live in docs/samples/. Never invent field names, endpoints or
@@ -32,7 +42,8 @@ Scope: delivery days in January 2026.
 - Product requirements live in docs/PRD.md. Follow them.
 
 # Code structure
-- backend/app/clients/   Elexon HTTP client only, no business logic
+- backend/app/clients/   Elexon HTTP client only, no business logic. Used ONLY by the
+                         ingest CLI. The deployed API must never import or call it.
 - backend/app/services/  all business logic (cutoff, horizon, metrics). Pure functions
                          on DataFrames where possible.
 - backend/app/api/       thin FastAPI routes, typed request and response models
@@ -60,3 +71,12 @@ Scope: delivery days in January 2026.
 # Visual style
 - Utility-friendly, clean, minimal. Colours: actual = solid dark, forecast = dashed blue,
   uncertainty band = light blue shaded. Units always shown (MW or MWh).
+
+# Deployment rules
+- The frontend always calls the relative path `/api` (Vite proxy in dev, Vercel rewrite in
+  production). Never hardcode localhost or the Render URL in source.
+- The backend reads `PORT` from the environment (default 8000) and `ALLOWED_ORIGINS` from
+  the environment.
+- The backend Docker build context is the repo root so that `data/` is copied into the image.
+- No secrets in the repo. No Elexon calls at runtime. The deployed app reads the committed
+  `data/*.parquet` snapshot only.

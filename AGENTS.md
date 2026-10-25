@@ -1,0 +1,77 @@
+# Project
+Web app for a UK energy utility's day-ahead power buying team. It shows the latest
+wind forecast available at decision time and quantifies forecast accuracy.
+Data: Elexon BMRS only. FUELHH (actuals, fuelType == WIND) and WINDFOR (forecasts).
+Scope: delivery days in January 2026.
+
+# Stack
+- Backend: Python 3.11, FastAPI, pandas, pydantic v2, httpx, pytest, ruff
+- Frontend: React + Vite + TypeScript, Recharts, TanStack Query
+- Local packaging: docker-compose, with nginx serving the frontend.
+- Production: the frontend is a static Vite build on Vercel. Only the backend runs as a
+  Docker image on Render.
+
+# Domain rules (critical)
+- Decisions for delivery day D are made on day D-1. A decision forecast for a target
+  startTime is the row with the MAX publishTime that is <= the decision cutoff.
+- "Never use a forecast published after the cutoff" applies to the Decision view and to
+  the decision-forecast error history (band, firm wind, and headline accuracy). It does
+  not apply to Explorer.
+- Explorer selects by horizon: the latest publishTime with horizon_hours >= H. The UI and
+  docs/PRD.md must label Explorer as a horizon view, not as the decision cutoff.
+- The backend default cutoff is the DECISION_CUTOFF_TIME setting (09:00 Europe/London
+  on D-1). The cutoff query parameter must be one of 08:00, 08:30, 09:00, 09:30, 10:00
+  (Europe/London). The API rejects any other value.
+- horizon_hours = startTime - publishTime.
+- All timestamps are stored and computed in UTC. Convert to Europe/London only for
+  cutoff construction and display.
+- Missing data must be flagged explicitly in outputs, never silently dropped or filled.
+- We have no demand data. Do not claim to compute residual demand.
+- error = forecast - actual. Firm wind = forecast - P90(error), which is the P10 of
+  actual wind. Upper band = forecast - P10(error). Both quantiles are computed only from
+  delivery days before the selected day.
+
+# Ground truth
+- Real API responses live in docs/samples/. Never invent field names, endpoints or
+  parameters. If unsure, read docs/samples/ or ask me to check the BMRS docs.
+- Product requirements live in docs/PRD.md. Follow them.
+
+# Code structure
+- backend/app/clients/   Elexon HTTP client only, no business logic. Used ONLY by the
+                         ingest CLI. The deployed API must never import or call it.
+- backend/app/services/  all business logic (cutoff, horizon, metrics). Pure functions
+                         on DataFrames where possible.
+- backend/app/api/       thin FastAPI routes, typed request and response models
+- backend/app/ingest.py  CLI entry point (python -m app.ingest)
+- backend/tests/         pytest, mirrors app structure
+- frontend/src/api/      typed API client
+- frontend/src/features/ one folder per tab (decision, explorer, accuracy)
+- frontend/src/components/ shared UI (states, KPI card, chart wrappers)
+
+# Quality bar
+- Every function in services/ has a pytest test with a small hand-built DataFrame.
+- Write tests before implementation for cutoff and horizon logic.
+- Type hints on all Python functions. No `any` in TypeScript.
+- No business logic in route handlers or React components.
+- Every UI view has loading, empty and error states.
+- Run `ruff check`, `pytest` and `npm run lint` before declaring a task done.
+
+# Working style
+- Make small, reviewable changes. One task per commit, message format: type(scope): summary.
+- Explain non-obvious decisions in a short code comment, not a long essay.
+- Do not add dependencies without saying why.
+- Do not touch files outside the task. List files you changed at the end.
+- Never include personal names, emails or usernames in code, configs or docs.
+
+# Visual style
+- Utility-friendly, clean, minimal. Colours: actual = solid dark, forecast = dashed blue,
+  uncertainty band = light blue shaded. Units always shown (MW or MWh).
+
+# Deployment rules
+- The frontend always calls the relative path `/api` (Vite proxy in dev, Vercel rewrite in
+  production). Never hardcode localhost or the Render URL in source.
+- The backend reads `PORT` from the environment (default 8000) and `ALLOWED_ORIGINS` from
+  the environment.
+- The backend Docker build context is the repo root so that `data/` is copied into the image.
+- No secrets in the repo. No Elexon calls at runtime. The deployed app reads the committed
+  `data/*.parquet` snapshot only.
