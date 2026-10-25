@@ -57,7 +57,10 @@ export function DecisionTab({
   return (
     <div className={space.stack}>
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="flex flex-col gap-1" htmlFor="decision-day">
+        <label
+          className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
+          htmlFor="decision-day"
+        >
           <Typography variant="small">Delivery day</Typography>
           <select
             id="decision-day"
@@ -72,7 +75,10 @@ export function DecisionTab({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1" htmlFor="decision-cutoff">
+        <label
+          className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
+          htmlFor="decision-cutoff"
+        >
           <Typography variant="small">Cutoff</Typography>
           <select
             id="decision-cutoff"
@@ -117,7 +123,7 @@ export function DecisionTab({
   )
 }
 
-const inputClass = `rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink ${color.focus}`
+const inputClass = `w-full max-w-full rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink sm:w-auto ${color.focus}`
 
 function DecisionBody({
   data,

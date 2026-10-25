@@ -40,7 +40,10 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
   return (
     <div className={space.stack}>
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="flex flex-col gap-1" htmlFor="explorer-start">
+        <label
+          className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
+          htmlFor="explorer-start"
+        >
           <Typography variant="small">From</Typography>
           <input
             id="explorer-start"
@@ -52,7 +55,10 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
             onChange={(event) => setStart(event.target.value)}
           />
         </label>
-        <label className="flex flex-col gap-1" htmlFor="explorer-end">
+        <label
+          className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
+          htmlFor="explorer-end"
+        >
           <Typography variant="small">To</Typography>
           <input
             id="explorer-end"
@@ -65,7 +71,7 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
           />
         </label>
         <label
-          className="flex min-w-56 flex-1 flex-col gap-1"
+          className="flex w-full min-w-0 flex-1 flex-col gap-1 sm:min-w-56"
           htmlFor="explorer-horizon"
         >
           <Typography variant="small">{`Horizon ${horizon} h`}</Typography>
@@ -113,7 +119,7 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
   )
 }
 
-const inputClass = `rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink ${color.focus}`
+const inputClass = `w-full max-w-full rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink sm:w-auto ${color.focus}`
 
 type SeriesBodyProps = {
   isLoading: boolean

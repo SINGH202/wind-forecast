@@ -13,7 +13,9 @@ export function Header({ active, onSelect }: HeaderProps) {
     <header
       className={`border-b ${color.line} ${color.paper} ${space.pageX} py-4`}
     >
-      <div className={`mx-auto flex w-full max-w-6xl flex-col ${space.md}`}>
+      <div
+        className={`mx-auto flex w-full min-w-0 max-w-6xl flex-col ${space.md}`}
+      >
         <Typography variant="h1">Wind Day-Ahead Desk</Typography>
         <Tabs active={active} onSelect={onSelect} />
       </div>

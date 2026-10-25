@@ -48,7 +48,10 @@ export function AccuracyTab({
   return (
     <div className={space.stack}>
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="flex flex-col gap-1" htmlFor="accuracy-start">
+        <label
+          className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
+          htmlFor="accuracy-start"
+        >
           <Typography variant="small">From</Typography>
           <input
             id="accuracy-start"
@@ -60,7 +63,10 @@ export function AccuracyTab({
             onChange={(event) => setStart(event.target.value)}
           />
         </label>
-        <label className="flex flex-col gap-1" htmlFor="accuracy-end">
+        <label
+          className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
+          htmlFor="accuracy-end"
+        >
           <Typography variant="small">To</Typography>
           <input
             id="accuracy-end"
@@ -72,7 +78,10 @@ export function AccuracyTab({
             onChange={(event) => setEnd(event.target.value)}
           />
         </label>
-        <label className="flex flex-col gap-1" htmlFor="accuracy-cutoff">
+        <label
+          className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
+          htmlFor="accuracy-cutoff"
+        >
           <Typography variant="small">Cutoff</Typography>
           <select
             id="accuracy-cutoff"
@@ -113,7 +122,7 @@ export function AccuracyTab({
   )
 }
 
-const inputClass = `rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink ${color.focus}`
+const inputClass = `w-full max-w-full rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink sm:w-auto ${color.focus}`
 
 type MetricsBodyProps = {
   isLoading: boolean

@@ -63,7 +63,7 @@ export function AccuracyCharts({ metrics }: ChartsProps) {
           />
         )}
       </ChartCard>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
         <ChartCard
           title="MAE by hour of day"
           subtitle="Decision forecast, Europe/London clock hour."
@@ -124,7 +124,7 @@ function GroupedBars({ rows }: { rows: BarRow[] }) {
   return (
     <div className={space.stack}>
       <SeriesLegend />
-      <div className="h-72 w-full">
+      <div className="h-72 w-full min-w-0 overflow-x-auto">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={rows}
@@ -176,7 +176,7 @@ function MaeBars({
   angled?: boolean
 }) {
   return (
-    <div className="h-72 w-full">
+    <div className="h-72 w-full min-w-0 overflow-x-auto">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={rows}
@@ -242,7 +242,7 @@ function Histogram({
           P90
         </Typography>
       </ul>
-      <div className="h-72 w-full">
+      <div className="h-72 w-full min-w-0 overflow-x-auto">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={rows}
@@ -324,8 +324,8 @@ function WorstDays({ rows }: { rows: WorstDay[] }) {
           hint="No delivery day has decision-forecast pairs."
         />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+        <div className="min-w-0 overflow-x-auto">
+          <table className="w-full min-w-[28rem] border-collapse text-left">
             <thead>
               <tr>
                 <SortHeader

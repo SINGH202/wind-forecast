@@ -13,7 +13,7 @@ export function KpiCard({ label, value, unit, hint, title }: KpiCardProps) {
   return (
     <article
       title={title}
-      className={`min-w-40 flex-1 rounded-md border ${color.line} ${color.paper} px-4 py-3`}
+      className={`min-w-0 flex-1 basis-full rounded-md border ${color.line} ${color.paper} px-4 py-3 sm:basis-64`}
     >
       <div className={`flex flex-col ${space.xs}`}>
         <Typography variant="small">{label}</Typography>

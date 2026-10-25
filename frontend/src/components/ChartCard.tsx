@@ -18,7 +18,7 @@ export function ChartCard({
 }: ChartCardProps) {
   return (
     <section
-      className={`rounded-md border ${color.line} ${color.paper} px-4 py-4`}
+      className={`min-w-0 rounded-md border ${color.line} ${color.paper} px-4 py-4`}
     >
       <div className={space.stack}>
         <div className={`flex flex-col ${space.xs}`}>

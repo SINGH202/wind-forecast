@@ -52,7 +52,7 @@ export function SeriesChart({ points }: SeriesChartProps) {
           {chart.forecast}
         </Typography>
       </ul>
-      <div className="h-80 w-full">
+      <div className="h-80 w-full min-w-0 overflow-x-auto">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={rows}

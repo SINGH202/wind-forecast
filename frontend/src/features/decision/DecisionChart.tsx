@@ -49,7 +49,7 @@ export function DecisionChart({ points, showBand }: DecisionChartProps) {
           </Typography>
         ) : null}
       </ul>
-      <div className="h-80 w-full">
+      <div className="h-80 w-full min-w-0 overflow-x-auto">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={rows}
