@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { ApiError, getMeta } from './api/client.ts'
+import { ApiError, getMeta, type MetaResponse } from './api/client.ts'
 import { EmptyState } from './components/EmptyState.tsx'
 import { ErrorState } from './components/ErrorState.tsx'
 import { Footer } from './components/Footer.tsx'
@@ -54,7 +54,13 @@ export default function App() {
               hint="The snapshot has no January delivery days."
             />
           ) : (
-            <TabBody tab={tab} />
+            <TabBody
+              tab={tab}
+              deliveryDays={meta.data.delivery_days}
+              cutoffOptions={meta.data.cutoff_options}
+              defaultCutoff={meta.data.default_cutoff}
+              timezone={meta.data.timezone}
+            />
           )}
         </div>
       </main>
@@ -63,14 +69,40 @@ export default function App() {
   )
 }
 
-function TabBody({ tab }: { tab: DeskTab }) {
+function TabBody({
+  tab,
+  deliveryDays,
+  cutoffOptions,
+  defaultCutoff,
+  timezone,
+}: {
+  tab: DeskTab
+  deliveryDays: MetaResponse['delivery_days']
+  cutoffOptions: MetaResponse['cutoff_options']
+  defaultCutoff: string
+  timezone: string
+}) {
   switch (tab) {
     case 'decision':
-      return <DecisionTab />
+      return (
+        <DecisionTab
+          deliveryDays={deliveryDays}
+          cutoffOptions={cutoffOptions}
+          defaultCutoff={defaultCutoff}
+          timezone={timezone}
+        />
+      )
     case 'explorer':
-      return <ExplorerTab />
+      return <ExplorerTab deliveryDays={deliveryDays} />
     case 'accuracy':
-      return <AccuracyTab />
+      return (
+        <AccuracyTab
+          deliveryDays={deliveryDays}
+          cutoffOptions={cutoffOptions}
+          defaultCutoff={defaultCutoff}
+          timezone={timezone}
+        />
+      )
     default: {
       const unreachable: never = tab
       return unreachable

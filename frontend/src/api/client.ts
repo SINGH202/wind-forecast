@@ -33,32 +33,44 @@ export function getMeta(): Promise<MetaResponse> {
   return getJson('/api/meta')
 }
 
-export function getDecision(query: DecisionQuery): Promise<DecisionResponse> {
+export function getDecision(
+  query: DecisionQuery,
+  signal?: AbortSignal,
+): Promise<DecisionResponse> {
   return getJson(
     `/api/decision${toQuery([
       ['delivery_day', query.delivery_day],
       ['cutoff', query.cutoff],
     ])}`,
+    signal,
   )
 }
 
-export function getSeries(query: SeriesQuery): Promise<SeriesResponse> {
+export function getSeries(
+  query: SeriesQuery,
+  signal?: AbortSignal,
+): Promise<SeriesResponse> {
   return getJson(
     `/api/series${toQuery([
       ['start_day', query.start_day],
       ['end_day', query.end_day],
       ['horizon_hours', query.horizon_hours],
     ])}`,
+    signal,
   )
 }
 
-export function getMetrics(query: MetricsQuery): Promise<MetricsResponse> {
+export function getMetrics(
+  query: MetricsQuery,
+  signal?: AbortSignal,
+): Promise<MetricsResponse> {
   return getJson(
     `/api/metrics${toQuery([
       ['start_day', query.start_day],
       ['end_day', query.end_day],
       ['cutoff', query.cutoff],
     ])}`,
+    signal,
   )
 }
 
@@ -78,8 +90,8 @@ function toQuery(
   return text.length > 0 ? `?${text}` : ''
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(path)
+async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(path, { signal })
   if (!response.ok) {
     throw new ApiError(response.status, await response.text())
   }

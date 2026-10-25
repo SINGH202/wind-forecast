@@ -7,10 +7,15 @@ import { Typography } from './Typography.tsx'
 type InfoPanelProps = {
   title: string
   children: ReactNode
+  defaultOpen?: boolean
 }
 
-export function InfoPanel({ title, children }: InfoPanelProps) {
-  const [open, setOpen] = useState(true)
+export function InfoPanel({
+  title,
+  children,
+  defaultOpen = true,
+}: InfoPanelProps) {
+  const [open, setOpen] = useState(defaultOpen)
   const panelId = useId()
 
   return (

@@ -6,11 +6,13 @@ type KpiCardProps = {
   value: string
   unit: string
   hint?: string
+  title?: string
 }
 
-export function KpiCard({ label, value, unit, hint }: KpiCardProps) {
+export function KpiCard({ label, value, unit, hint, title }: KpiCardProps) {
   return (
     <article
+      title={title}
       className={`min-w-40 flex-1 rounded-md border ${color.line} ${color.paper} px-4 py-3`}
     >
       <div className={`flex flex-col ${space.xs}`}>

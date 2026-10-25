@@ -28,3 +28,13 @@ export const chart = {
   forecast: 'Forecast',
   band: 'Uncertainty band',
 } as const
+
+/** Stroke colours for chart libraries. Same hex values as tokens.css. */
+export const chartStroke = {
+  actual: '#1c1917',
+  forecast: '#1d4ed8',
+  band: '#dbeafe',
+  muted: '#57534e',
+  grid: '#e4dfd4',
+  paper: '#fffcf7',
+} as const
