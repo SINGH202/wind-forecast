@@ -1,0 +1,19 @@
+@theme {
+  --color-ink: #1c1917;
+  --color-muted: #57534e;
+  --color-surface: #f4f2ec;
+  --color-paper: #fffcf7;
+  --color-line: #e4dfd4;
+  --color-actual: #1c1917;
+  --color-forecast: #1d4ed8;
+  --color-band: #dbeafe;
+  --color-danger: #9f1239;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
