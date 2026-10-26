@@ -36,7 +36,7 @@ Instead it shows firm wind: the decision forecast minus an error quantile. That 
 
 ### Known limitation: persistent positive forecast bias
 
-For January 2026 the decision forecast is biased high by about 1,852 MW across 744 pairs. 631 of those 744 hours are over-forecasts, 27 of 31 days are positive, and the ratio of total forecast to total actual is 1.160. The bias is positive in all five actual-wind quintiles, from +993 MW to +2,824 MW, and in every horizon bucket, from +1,548 MW at 0–6 h to +2,005 MW at 36–48 h, including horizons below 0 h and above 48 h. The P10/P90 band and firm wind are computed from these empirical decision-forecast errors, so they already include this bias. The cause is unconfirmed.
+For delivery days 2 January through 1 February 2026, `scripts/diagnose_bias.py` prints a decision-forecast bias of 1745.94 MW on 744 pairs. 630 pairs have forecast >= actual, and sum(forecast) / sum(actual) is 1.1547. Quintile biases are 1817.8, 1057.6, 1065.9, 2708.4, and 2075.4 MW. Horizon biases are 1428.5 MW at [0,6), 1900.1 MW at [36,48], 1652.1 MW below 0 h, and 1415.0 MW above 48 h. The P10/P90 band and firm wind are computed from these empirical decision-forecast errors, so they already include this bias. The cause is unconfirmed.
 
 ## Resolved decisions
 

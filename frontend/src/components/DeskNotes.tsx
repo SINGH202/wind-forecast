@@ -71,10 +71,10 @@ function HowTo({ view }: { view: DeskView }) {
             and histogram charts use the decision forecast.
           </Typography>
           <Typography variant="li">
-            Known limitation: the January decision forecast has a persistent
-            positive bias of about 1,852 MW, and the P10/P90 band and firm wind
-            already include it because they are built from those errors; the
-            cause is unconfirmed.
+            Known limitation: for delivery days from 2 January to 1 February
+            2026 the decision forecast has a persistent positive bias of 1745.94
+            MW, and the P10/P90 band and firm wind already include it because
+            they are built from those errors; the cause is unconfirmed.
           </Typography>
         </ul>
       )
