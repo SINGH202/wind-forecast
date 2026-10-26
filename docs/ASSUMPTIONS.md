@@ -38,12 +38,14 @@ Instead it shows firm wind: the decision forecast minus an error quantile. That 
 
 For January 2026 the decision forecast is biased high by about 1,852 MW across 744 pairs. 631 of those 744 hours are over-forecasts, 27 of 31 days are positive, and the ratio of total forecast to total actual is 1.160. The bias is positive in all five actual-wind quintiles, from +993 MW to +2,824 MW, and in every horizon bucket, from +1,548 MW at 0–6 h to +2,005 MW at 36–48 h, including horizons below 0 h and above 48 h. The P10/P90 band and firm wind are computed from these empirical decision-forecast errors, so they already include this bias. The cause is unconfirmed.
 
-## Questions
+## Resolved decisions
 
-- Which error quantile, and over which errors (all horizons, or split by horizon)?
-- WINDFOR `startTime` in the sample is hourly and FUELHH is half-hourly. How is a forecast paired with each half-hour actual?
-- The sample timestamps end in `Z`. The notes do not confirm that means UTC. How is that string compared with 09:00 Europe/London?
-- If no WINDFOR row for a `startTime` has `publishTime` at or before the cutoff, what is shown? The samples do not say to fill the gap.
-- Are negative-horizon WINDFOR rows (240 of 1168 in the sample, where `startTime` is before `publishTime`) allowed as the decision forecast?
-- Is the cutoff chooser limited to 08:00–10:00 Europe/London, or can it be any time?
-- The samples do not state the unit of `generation`. What label should the app show?
+- Quantiles are the P10 and P90 of decision-forecast errors from delivery days before the selected day. All horizons are pooled.
+- Pairing is on `startTime`. The forecast is hourly, so metrics use the 24 matching hourly slots per day. The :30 actuals are not paired.
+- A slot with no valid forecast is flagged and never filled.
+- A negative-horizon row can never be a decision forecast, because a D-1 cutoff precedes every target on D. Explorer uses horizon >= 0.
+
+## To verify
+
+- Whether the `Z` suffix means UTC.
+- The unit of `generation`. The app currently labels it MW.
