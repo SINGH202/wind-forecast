@@ -16,7 +16,7 @@ The default cutoff is 09:00 Europe/London on D-1. The cutoff is configurable. In
 
 Buyers for delivery day D bid on D-1, so the forecast cutoff should fall before the morning auctions close. EPEX SPOT’s GB 60-minute day-ahead order book closes at 09:20 GMT/BST on D-1, and the outcome is published and validated as soon as possible from 09:30 GMT/BST. The GB 30-minute auction closes at 15:30 GMT/BST, with results from 15:45 GMT/BST (EPEX SPOT Operational Rules). The products page states the same clocks but labels them GMT. Nord Pool’s N2EX gate closure is 09:50 GMT, with results at latest 10:00 GMT. Those first results are preliminary until TSO validation, normally before 11:00 CET (Nord Pool support article, modified 26 July 2022). The GB day-ahead regulations do not print 09:50. The N2EX half-hour order-book close was not found: UNVERIFIED.
 
-Default: 09:00 Europe/London on D-1, because it is before both verified morning closes under either a GMT or a GMT/BST reading of 09:20. Offer 08:00 to 10:00 Europe/London.
+Default: 09:00 Europe/London on D-1, because it is before both verified morning closes under either a GMT or a GMT/BST reading of 09:20. Offer 08:00 to 09:00 Europe/London. 09:30 and later fall after the 09:20 EPEX close, so a buyer could not have acted on a forecast published after that close.
 
 ## Data definitions
 

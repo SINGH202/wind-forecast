@@ -100,7 +100,8 @@ function Assumptions() {
         For delivery day D the buyer decides on D-1. The forecast is the latest
         one published at or before the cutoff. The default cutoff is 09:00
         Europe/London, before the morning day-ahead auctions close. The choices
-        run from 08:00 to 10:00.
+        run from 08:00 to 09:00. 09:30 and later are after the 09:20 auction
+        close.
       </Typography>
       <Typography variant="li">
         Error is forecast minus actual. A positive error is an over-forecast.

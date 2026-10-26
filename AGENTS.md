@@ -20,7 +20,7 @@ Scope: delivery days in January 2026.
 - Explorer selects by horizon: the latest publishTime with horizon_hours >= H. The UI and
   docs/PRD.md must label Explorer as a horizon view, not as the decision cutoff.
 - The backend default cutoff is the DECISION_CUTOFF_TIME setting (09:00 Europe/London
-  on D-1). The cutoff query parameter must be one of 08:00, 08:30, 09:00, 09:30, 10:00
+  on D-1). The cutoff query parameter must be one of 08:00, 08:30, 09:00
   (Europe/London). The API rejects any other value.
 - horizon_hours = startTime - publishTime.
 - All timestamps are stored and computed in UTC. Convert to Europe/London only for

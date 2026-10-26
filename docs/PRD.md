@@ -15,9 +15,9 @@ Power is shown in MW. An hourly WINDFOR slot contributes `MW × 1.0` MWh. A fore
 
 These close the questions in `docs/ASSUMPTIONS.md`.
 
-- Cutoff choices are `08:00`, `08:30`, `09:00`, `09:30`, `10:00` Europe/London on D-1. The default is the `DECISION_CUTOFF_TIME` setting, which is `09:00`. The API rejects any other cutoff.
+- Cutoff choices are `08:00`, `08:30`, `09:00` Europe/London on D-1. The default is the `DECISION_CUTOFF_TIME` setting, which is `09:00`. The API rejects any other cutoff. 09:30 and later fall after the 09:20 EPEX close.
 - A forecast matches a half-hour only when `startTime` is equal. The WINDFOR sample is hourly, so `:30` slots have no forecast unless a row with that exact `startTime` exists. Show the gap.
-- `publishTime <= cutoff` is allowed even if the horizon is negative. For this cutoff range and a delivery day D, selected horizons are still positive, because every `startTime` on D is after 10:00 on D-1.
+- `publishTime <= cutoff` is allowed even if the horizon is negative. For this cutoff range and a delivery day D, selected horizons are still positive, because every `startTime` on D is after 09:00 on D-1.
 - If no row is early enough, that half-hour's forecast fields are null and `missing_forecast` is true.
 - Generation is labelled MW. The samples do not name the unit; the product still shows MW and MWh on every figure.
 
@@ -169,7 +169,7 @@ Day          MAE MW    Bias MW    Pairs
 
 ## API
 
-JSON. Times in responses are UTC `YYYY-MM-DDTHH:MM:SSZ` plus a London display string where listed. An unknown query value, a day outside January 2026, `start_day > end_day`, a cutoff not in the five choices, or `horizon_hours` outside 0–48 returns 400 `{ "detail": "<parameter> is invalid" }`. A selection with no rows returns 200 and null metrics, not 404.
+JSON. Times in responses are UTC `YYYY-MM-DDTHH:MM:SSZ` plus a London display string where listed. An unknown query value, a day outside January 2026, `start_day > end_day`, a cutoff not in the three choices, or `horizon_hours` outside 0–48 returns 400 `{ "detail": "<parameter> is invalid" }`. A selection with no rows returns 200 and null metrics, not 404.
 
 ### `GET /api/meta`
 
@@ -178,7 +178,7 @@ No query.
 ```
 delivery_days: string[]          # UTC dates in Jan 2026 that have FUELHH wind or WINDFOR
 default_cutoff: "09:00"             # value of DECISION_CUTOFF_TIME
-cutoff_options: ["08:00","08:30","09:00","09:30","10:00"]
+cutoff_options: ["08:00","08:30","09:00"]
 timezone: "Europe/London"
 power_unit: "MW"
 energy_unit: "MWh"
@@ -189,7 +189,7 @@ resolution_minutes: 30
 
 ### `GET /api/decision?delivery_day=2026-01-15&cutoff=09:00`
 
-`cutoff` defaults to `DECISION_CUTOFF_TIME` (`09:00`). Any other value than the five allowed times returns 400.
+`cutoff` defaults to `DECISION_CUTOFF_TIME` (`09:00`). Any other value than the three allowed times returns 400.
 
 ```
 delivery_day, cutoff_local, cutoff_utc
@@ -222,7 +222,7 @@ points[]:    # one per half-hour in the range, in start_time order
 
 ### `GET /api/metrics?start_day=2026-01-01&end_day=2026-01-31&cutoff=09:00`
 
-`cutoff` defaults to `DECISION_CUTOFF_TIME` (`09:00`) and must be one of the five allowed times.
+`cutoff` defaults to `DECISION_CUTOFF_TIME` (`09:00`) and must be one of the three allowed times.
 
 Headline fields use the decision forecast at that cutoff. `by_horizon` does not.
 

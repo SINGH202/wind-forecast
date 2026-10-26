@@ -99,7 +99,7 @@ def test_meta_reports_coverage_and_assumptions(tmp_path: Path) -> None:
     assert body["min_start_time"] == "2026-01-01T00:00:00Z"
     assert body["max_start_time"] == "2026-01-04T00:00:00Z"
     assert body["default_cutoff"] == "09:00"
-    assert body["cutoff_options"] == ["08:00", "08:30", "09:00", "09:30", "10:00"]
+    assert body["cutoff_options"] == ["08:00", "08:30", "09:00"]
     assert body["timezone"] == "Europe/London"
     assert body["manifest"]["fetched_at"] == "2026-02-02T00:00:00Z"
     assert body["manifest"]["actuals_rows"] == 4
@@ -170,6 +170,9 @@ def test_decision_rejects_a_day_outside_the_snapshot(tmp_path: Path) -> None:
     february = client.get("/api/decision", params={"delivery_day": "2026-02-01", "cutoff": "09:00"})
     later = client.get("/api/decision", params={"delivery_day": "2026-01-20", "cutoff": "09:00"})
     cutoff = client.get("/api/decision", params={"delivery_day": "2026-01-04", "cutoff": "07:00"})
+    after_close = client.get(
+        "/api/decision", params={"delivery_day": "2026-01-04", "cutoff": "09:30"}
+    )
     garbage = client.get("/api/decision", params={"delivery_day": "nope", "cutoff": "09:00"})
 
     assert february.status_code == 400
@@ -178,6 +181,8 @@ def test_decision_rejects_a_day_outside_the_snapshot(tmp_path: Path) -> None:
     assert later.json() == {"detail": "delivery_day is invalid"}
     assert cutoff.status_code == 400
     assert cutoff.json() == {"detail": "cutoff is invalid"}
+    assert after_close.status_code == 400
+    assert after_close.json() == {"detail": "cutoff is invalid"}
     assert garbage.status_code == 422
 
 
@@ -268,7 +273,7 @@ def test_metrics_rejects_an_unknown_cutoff(tmp_path: Path) -> None:
 
     response = client.get(
         "/api/metrics",
-        params={"start_day": "2026-01-04", "end_day": "2026-01-04", "cutoff": "11:00"},
+        params={"start_day": "2026-01-04", "end_day": "2026-01-04", "cutoff": "10:00"},
     )
 
     assert response.status_code == 400
