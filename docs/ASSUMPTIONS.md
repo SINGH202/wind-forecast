@@ -34,6 +34,10 @@ There is no demand series, so the app does not compute residual demand and does 
 
 Instead it shows firm wind: the decision forecast minus an error quantile. That is the amount of wind the buyer can reasonably count on.
 
+### Known limitation: persistent positive forecast bias
+
+For January 2026 the decision forecast is biased high by about 1,852 MW across 744 pairs. 631 of those 744 hours are over-forecasts, 27 of 31 days are positive, and the ratio of total forecast to total actual is 1.160. The bias is positive in all five actual-wind quintiles, from +993 MW to +2,824 MW, and in every horizon bucket, from +1,548 MW at 0–6 h to +2,005 MW at 36–48 h, including horizons below 0 h and above 48 h. The P10/P90 band and firm wind are computed from these empirical decision-forecast errors, so they already include this bias. The cause is unconfirmed.
+
 ## Questions
 
 - Which error quantile, and over which errors (all horizons, or split by horizon)?

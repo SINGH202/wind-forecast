@@ -70,6 +70,12 @@ function HowTo({ view }: { view: DeskView }) {
             The horizon chart uses every forecast vintage. The hour, wind-level,
             and histogram charts use the decision forecast.
           </Typography>
+          <Typography variant="li">
+            Known limitation: the January decision forecast has a persistent
+            positive bias of about 1,852 MW, and the P10/P90 band and firm wind
+            already include it because they are built from those errors; the
+            cause is unconfirmed.
+          </Typography>
         </ul>
       )
     default: {
