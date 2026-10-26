@@ -25,12 +25,12 @@ export class ApiError extends Error {
   }
 }
 
-export function getHealth(): Promise<HealthResponse> {
-  return getJson('/api/health')
+export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
+  return getJson('/api/health', signal)
 }
 
-export function getMeta(): Promise<MetaResponse> {
-  return getJson('/api/meta')
+export function getMeta(signal?: AbortSignal): Promise<MetaResponse> {
+  return getJson('/api/meta', signal)
 }
 
 export function getDecision(
@@ -90,10 +90,65 @@ function toQuery(
   return text.length > 0 ? `?${text}` : ''
 }
 
+const MAX_RETRIES = 3
+
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await readJson<T>(path, signal)
+    } catch (error) {
+      if (attempt >= MAX_RETRIES || !canRetry(error, signal)) {
+        throw error
+      }
+      await wait(backoffMs(attempt), signal)
+    }
+  }
+}
+
+async function readJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(path, { signal })
   if (!response.ok) {
     throw new ApiError(response.status, await response.text())
   }
   return (await response.json()) as T
+}
+
+function backoffMs(attempt: number): number {
+  return 1000 * 2 ** attempt
+}
+
+function canRetry(error: unknown, signal?: AbortSignal): boolean {
+  if (signal?.aborted || isAbortError(error)) {
+    return false
+  }
+  if (error instanceof ApiError) {
+    return error.status >= 500
+  }
+  return error instanceof TypeError
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError'
+}
+
+function wait(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(abortError())
+      return
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(abortError())
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+function abortError(): DOMException {
+  return new DOMException('The operation was aborted.', 'AbortError')
 }

@@ -18,7 +18,7 @@ export default function App() {
   const [tab, selectTab] = useDeskTab()
   const meta = useQuery({
     queryKey: ['meta'],
-    queryFn: getMeta,
+    queryFn: ({ signal }) => getMeta(signal),
   })
 
   const coverage = meta.data
