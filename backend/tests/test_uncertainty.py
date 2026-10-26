@@ -135,23 +135,30 @@ def test_apply_band_clips_firm_wind_at_zero() -> None:
     assert pd.isna(apply_band(decision, None, None).loc[0, "lower_mw"])
 
 
-def test_day_kpis_use_half_hour_mwh_and_forecast_age() -> None:
-    """Energy is MW times 0.5 h. Age is cutoff minus publish time."""
-    # expected = 10 * 0.5 + 30 * 0.5 + 8 * 0.5 = 24. The empty slot adds nothing.
-    # firm = 0 * 0.5 + 10 * 0.5 + 4 * 0.5 = 7
+def test_day_kpis_use_hourly_slot_mwh_and_forecast_age() -> None:
+    """An hourly forecast is MW times 1.0 h. Age is cutoff minus publish time."""
+    # starts 00:00, 00:30 (empty), 01:00, 02:00. The shortest forecast gap is 1 h.
+    # expected = 10 * 1 + 30 * 1 + 8 * 1 = 48. The empty slot adds nothing.
+    # firm = 0 * 1 + 10 * 1 + 4 * 1 = 14
     # ages from 09:00Z: 08:00 -> 1 h, 07:00 -> 2 h, 05:00 -> 4 h
     # min 1, median 2, max 4. The empty slot has no publish time.
     cutoff = _utc("2026-01-14T09:00:00Z")
     decision = pd.DataFrame(
         {
-            "forecast_mw": [10.0, 30.0, 8.0, pd.NA],
-            "firm_mw": [0.0, 10.0, 4.0, pd.NA],
-            "has_forecast": [True, True, True, False],
+            "start_time_utc": [
+                _utc("2026-01-15T00:00:00Z"),
+                _utc("2026-01-15T00:30:00Z"),
+                _utc("2026-01-15T01:00:00Z"),
+                _utc("2026-01-15T02:00:00Z"),
+            ],
+            "forecast_mw": [10.0, pd.NA, 30.0, 8.0],
+            "firm_mw": [0.0, pd.NA, 10.0, 4.0],
+            "has_forecast": [True, False, True, True],
             "publish_time_utc": [
                 _utc("2026-01-14T08:00:00Z"),
+                pd.NaT,
                 _utc("2026-01-14T07:00:00Z"),
                 _utc("2026-01-14T05:00:00Z"),
-                pd.NaT,
             ],
             "cutoff_utc": [cutoff, cutoff, cutoff, cutoff],
         }
@@ -159,8 +166,21 @@ def test_day_kpis_use_half_hour_mwh_and_forecast_age() -> None:
 
     kpis = day_kpis(decision)
 
-    assert kpis["expected_mwh"] == 24
-    assert kpis["firm_mwh"] == 7
+    assert kpis["expected_mwh"] == 48
+    assert kpis["firm_mwh"] == 14
+    half_hour = pd.DataFrame(
+        {
+            "start_time_utc": [
+                _utc("2026-01-15T00:00:00Z"),
+                _utc("2026-01-15T00:30:00Z"),
+            ],
+            "forecast_mw": [10.0, 20.0],
+            "firm_mw": [4.0, 6.0],
+        }
+    )
+    half = day_kpis(half_hour)
+    assert half["expected_mwh"] == 15
+    assert half["firm_mwh"] == 5
     assert kpis["forecast_age_hours"] == {"min": 1.0, "median": 2.0, "max": 4.0}
     assert day_kpis(decision.iloc[0:0])["forecast_age_hours"]["min"] is None
     assert day_kpis(pd.DataFrame({"forecast_mw": [pd.NA], "firm_mw": [pd.NA]}))[

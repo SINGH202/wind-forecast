@@ -124,7 +124,7 @@ export interface components {
         };
         /**
          * DecisionKpis
-         * @description Day totals. Energy is MW times 0.5 h. Age is the freshest selected forecast.
+         * @description Day totals. An hourly forecast slot is MW times 1.0 h. Age is the freshest forecast.
          */
         DecisionKpis: {
             /** Expected Mwh */

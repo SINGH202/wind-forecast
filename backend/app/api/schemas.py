@@ -48,7 +48,7 @@ class DecisionPoint(BaseModel):
 
 
 class DecisionKpis(BaseModel):
-    """Day totals. Energy is MW times 0.5 h. Age is the freshest selected forecast."""
+    """Day totals. An hourly forecast slot is MW times 1.0 h. Age is the freshest forecast."""
 
     expected_mwh: float | None
     firm_wind_mwh: float | None

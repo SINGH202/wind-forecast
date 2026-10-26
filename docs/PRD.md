@@ -4,7 +4,7 @@ Pilot for a day-ahead power trader or analyst. January 2026 only. National wind 
 
 A delivery day D is the 48 half-hours whose `startTime` falls on that UTC date, from `D 00:00Z` to `D 23:30Z`. That matches the sample, where `settlementDate` equals the UTC date of `startTime` and period 1 is `00:00`. Charts and hour-of-day labels use Europe/London. Stored timestamps are the sample strings treated as UTC (they all end in `Z`). January 2026 is GMT, so the London clock matches UTC. The cutoff is still built in Europe/London and then converted to UTC before any comparison.
 
-Power is shown in MW. A half-hour contributes `MW × 0.5` MWh. Missing slots are left empty. They are never copied, interpolated, or dropped from the 48-row grid.
+Power is shown in MW. An hourly WINDFOR slot contributes `MW × 1.0` MWh. A forecast that lands on both :00 and :30 contributes `MW × 0.5` MWh. Missing slots are left empty. They are never copied, interpolated, or dropped from the 48-row grid.
 
 ## Jobs
 
@@ -44,9 +44,9 @@ firm_mw      = band_low_mw
 `p90(error) >= p10(error)`, so the low band is never above the high band. Do not clamp negative firm MW. If `n = 0`, the band and firm values are null and the response includes `no_prior_days_for_band`.
 
 ```
-half_hour_mwh = mw × 0.5
-expected_mwh  = sum of forecast half-hour MWh where forecast_mw is present
-firm_wind_mwh = sum of firm_mw × 0.5 where firm_mw is present
+slot_hours     = 1.0 when forecast start times are an hour apart, else 0.5
+expected_mwh  = sum of forecast_mw × slot_hours where forecast_mw is present
+firm_wind_mwh = sum of firm_mw × slot_hours where firm_mw is present
 forecast_age_hours = cutoff_utc - publish_time
 ```
 

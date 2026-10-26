@@ -14,6 +14,7 @@ import pandas as pd
 
 from app.services.selection import decision_forecast, join_with_actuals
 
+HOURLY_SLOT_H = 1.0
 HALF_HOUR_H = 0.5
 
 
@@ -112,19 +113,22 @@ def apply_band(
 def day_kpis(decision_df: pd.DataFrame) -> dict[str, float | dict[str, float | None] | None]:
     """Day energy and the age of the forecasts that made the cutoff.
 
-    ``expected_mwh`` sums ``forecast_mw * 0.5`` where a forecast is present.
-    ``firm_mwh`` sums ``firm_mw * 0.5`` where firm MW is present. A half-hour is
-    0.5 h. An empty slot is left out of the sum; it is not treated as 0 MW.
-    The sum is None when no slot contributes.
+    ``expected_mwh`` sums ``forecast_mw * slot_hours`` where a forecast is present.
+    ``firm_mwh`` sums ``firm_mw * slot_hours`` where firm MW is present.
+    ``slot_hours`` is the gap between forecast start times: 1.0 h for an hourly
+    WINDFOR slot, 0.5 h when forecasts land on both :00 and :30. An empty slot
+    is left out of the sum; it is not treated as 0 MW. The sum is None when no
+    slot contributes.
 
     ``forecast_age_hours`` is ``cutoff_utc - publish_time_utc`` in hours, for rows
     with a forecast. The frame carries ``cutoff_utc`` on each row. ``min`` is the
     freshest forecast that made the cutoff, ``max`` is the oldest, and ``median``
     is the middle age. With no selected forecast every age is None, not zero.
     """
+    hours = _slot_hours(decision_df)
     return {
-        "expected_mwh": _mwh(decision_df.get("forecast_mw", pd.Series(dtype="float64"))),
-        "firm_mwh": _mwh(decision_df["firm_mw"]) if "firm_mw" in decision_df else None,
+        "expected_mwh": _mwh(decision_df, "forecast_mw", hours),
+        "firm_mwh": _mwh(decision_df, "firm_mw", hours),
         "forecast_age_hours": _forecast_ages(decision_df),
     }
 
@@ -147,11 +151,36 @@ def _paired_errors(
     return usable["forecast_mw"] - usable["actual_mw"]
 
 
-def _mwh(values: pd.Series) -> float | None:
-    present = values.dropna()
+def _slot_hours(frame: pd.DataFrame) -> float:
+    """Hours represented by one present forecast.
+
+    The shortest gap between forecast start times is the slot length, so a
+    missing hour does not stretch the previous slot. Hourly WINDFOR starts are
+    1.0 h apart. Forecasts on both :00 and :30 are 0.5 h apart. One forecast on
+    the hour, or a frame without start times, is 1.0 h.
+    """
+    if "start_time_utc" not in frame.columns or "forecast_mw" not in frame.columns:
+        return HOURLY_SLOT_H
+    present = (
+        frame.loc[frame["forecast_mw"].notna(), "start_time_utc"].dropna().sort_values()
+    )
+    if len(present) >= 2:
+        gaps = present.diff().dt.total_seconds().dropna() / 3600
+        positive = gaps[gaps > 0]
+        if not positive.empty:
+            return float(positive.min())
+    if len(present) == 1 and pd.Timestamp(present.iloc[0]).minute == 30:
+        return HALF_HOUR_H
+    return HOURLY_SLOT_H
+
+
+def _mwh(frame: pd.DataFrame, column: str, slot_hours: float) -> float | None:
+    if column not in frame.columns:
+        return None
+    present = frame[column].dropna()
     if present.empty:
         return None
-    return float((present * HALF_HOUR_H).sum())
+    return float((present * slot_hours).sum())
 
 
 def _forecast_ages(decision_df: pd.DataFrame) -> dict[str, float | None]:

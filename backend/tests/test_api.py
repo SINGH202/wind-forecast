@@ -110,7 +110,8 @@ def test_decision_uses_the_cutoff_and_prior_days_only(tmp_path: Path) -> None:
     """100 MW at 08:00Z is the decision forecast. Firm wind is 100 - 28 = 72."""
     # Prior errors +10, +20, +30. P10 = 12, P90 = 28.
     # lower = max(0, 100 - 28) = 72. upper = 100 - 12 = 88.
-    # expected = 100 * 0.5 = 50 MWh. firm = 72 * 0.5 = 36 MWh. Age = 1 h.
+    # The only forecast is on the hour, so the slot is 1.0 h.
+    # expected = 100 * 1 = 100 MWh. firm = 72 * 1 = 72 MWh. Age = 1 h.
     client = _client(tmp_path)
 
     response = client.get("/api/decision", params={"delivery_day": "2026-01-04"})
@@ -132,8 +133,8 @@ def test_decision_uses_the_cutoff_and_prior_days_only(tmp_path: Path) -> None:
     assert midnight["band_high_mw"] == 88
     assert midnight["forecast_age_hours"] == 1
     assert body["points"][1]["forecast_mw"] is None
-    assert body["kpis"]["expected_mwh"] == 50
-    assert body["kpis"]["firm_wind_mwh"] == 36
+    assert body["kpis"]["expected_mwh"] == 100
+    assert body["kpis"]["firm_wind_mwh"] == 72
     assert body["kpis"]["forecast_age_hours"] == 1
     assert body["kpis"]["half_hours_with_forecast"] == 1
     assert body["kpis"]["half_hours_expected"] == 48
