@@ -95,14 +95,14 @@ export function SeriesChart({ points }: SeriesChartProps) {
               isAnimationActive={false}
             />
             <Line
-              type="linear"
+              type="stepAfter"
               dataKey="forecastMw"
               name={chart.forecast}
               stroke={chartStroke.forecast}
               strokeWidth={2}
               strokeDasharray="6 4"
               dot={false}
-              connectNulls={false}
+              connectNulls
               isAnimationActive={false}
             />
             <Brush
@@ -114,6 +114,7 @@ export function SeriesChart({ points }: SeriesChartProps) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      <Typography variant="small">WINDFOR forecasts are hourly.</Typography>
       <Typography variant="small">
         {`Missing forecast: ${gaps.forecast} half-hours. Missing actual: ${gaps.actual} half-hours.`}
       </Typography>

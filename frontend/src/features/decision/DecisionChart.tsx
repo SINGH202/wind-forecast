@@ -94,14 +94,14 @@ export function DecisionChart({ points, showBand }: DecisionChartProps) {
               />
             ) : null}
             <Line
-              type="linear"
+              type="stepAfter"
               dataKey="forecastMw"
               name={chart.forecast}
               stroke={chartStroke.forecast}
               strokeWidth={2}
               strokeDasharray="6 4"
               dot={false}
-              connectNulls={false}
+              connectNulls
               isAnimationActive={false}
             />
             <Line
@@ -117,6 +117,7 @@ export function DecisionChart({ points, showBand }: DecisionChartProps) {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+      <Typography variant="small">WINDFOR forecasts are hourly.</Typography>
     </div>
   )
 }
