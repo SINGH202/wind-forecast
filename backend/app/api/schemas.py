@@ -145,13 +145,26 @@ class HorizonMetrics(BaseModel):
 
 
 class MetricsResponse(BaseModel):
-    """Accuracy for a date range at one cutoff."""
+    """Accuracy for a date range at one cutoff.
+
+    WINDFOR is hourly. Headline metrics use the 24 matching hourly slots per day.
+    """
 
     start_day: str
     end_day: str
     cutoff: str
-    n: int
-    pairs_excluded_missing: int
+    n: int = Field(
+        description=(
+            "Matching hourly slots. The forecast is hourly, "
+            "so metrics use the 24 matching hourly slots per day."
+        )
+    )
+    pairs_excluded_missing: int = Field(
+        description=(
+            "Half-hour rows with no forecast or no actual. The forecast is hourly, "
+            "so metrics use the 24 matching hourly slots per day."
+        )
+    )
     mae_mw: float | None
     rmse_mw: float | None
     bias_mw: float | None

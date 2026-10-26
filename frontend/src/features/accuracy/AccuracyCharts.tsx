@@ -46,7 +46,7 @@ export function AccuracyCharts({ metrics }: ChartsProps) {
     <div className={space.stack}>
       <div className={`flex flex-wrap ${space.md}`}>
         <Typography variant="small">
-          {`${metrics.n} decision pairs. ${metrics.pairs_excluded_missing} half-hours excluded because a forecast or actual is missing.`}
+          {`The forecast is hourly, so metrics use the 24 matching hourly slots per day (${metrics.n} pairs).`}
         </Typography>
       </div>
       <ChartCard

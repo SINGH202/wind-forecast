@@ -23,7 +23,7 @@ def get_metrics(
     end_day: Annotated[date, Query()],
     cutoff: Annotated[str | None, Query()] = None,
 ) -> MetricsResponse:
-    """Return decision-forecast accuracy, plus every vintage grouped by horizon."""
+    """Return accuracy for the 24 hourly slots per day, plus vintages by horizon."""
     require_range(start_day, end_day, dataset)
     chosen = require_cutoff(cutoff or settings.decision_cutoff_time)
     payload = build_metrics(dataset, start_day, end_day, chosen, settings.timezone)

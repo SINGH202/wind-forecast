@@ -306,7 +306,7 @@ export interface components {
         };
         /**
          * MetricsResponse
-         * @description Accuracy for a date range at one cutoff.
+         * @description Accuracy for a date range at one cutoff. WINDFOR is hourly. Headline metrics use the 24 matching hourly slots per day.
          */
         MetricsResponse: {
             /** Start Day */
@@ -315,9 +315,15 @@ export interface components {
             end_day: string;
             /** Cutoff */
             cutoff: string;
-            /** N */
+            /**
+             * N
+             * @description Matching hourly slots. The forecast is hourly, so metrics use the 24 matching hourly slots per day.
+             */
             n: number;
-            /** Pairs Excluded Missing */
+            /**
+             * Pairs Excluded Missing
+             * @description Half-hour rows with no forecast or no actual. The forecast is hourly, so metrics use the 24 matching hourly slots per day.
+             */
             pairs_excluded_missing: number;
             /** Mae Mw */
             mae_mw: number | null;
