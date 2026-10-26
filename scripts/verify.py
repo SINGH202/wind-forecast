@@ -1,4 +1,5 @@
-"""Independent check of the decision forecast and January error scores.
+# 2 January through 1 February 2026: the half-hour grid assumes no DST change.
+"""Independent check of the decision forecast and the numbers the buyer acts on.
 
 Uses pandas and the parquet snapshot only. It does not import the application,
 so a passing result is not a check of the service functions against themselves.
@@ -24,9 +25,14 @@ API_BASE = "http://localhost:8000"
 TOLERANCE = 1e-6
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 CHECK_DAYS = (date(2026, 1, 5), date(2026, 1, 15), date(2026, 1, 28))
-JANUARY_START = date(2026, 1, 1)
-JANUARY_END = date(2026, 1, 31)
+JANUARY_START = date(2026, 1, 2)
+JANUARY_END = date(2026, 2, 1)
 CUTOFF_HHMM = (9, 0)
+MIN_HISTORY_DAYS = 3
+EXPECTED_JANUARY_PAIRS = 744
+LEAK_DAY = date(2026, 1, 15)
+LEAK_LATER_DAY = date(2026, 1, 16)
+LEAK_MW = 1000.0
 
 
 def main() -> int:
@@ -36,6 +42,7 @@ def main() -> int:
     for delivery_day in CHECK_DAYS:
         failures += _check_decision_day(actuals, forecasts, delivery_day)
     failures += _check_january_scores(actuals, forecasts)
+    failures += _check_no_future_leak(actuals, forecasts)
     if failures:
         print(f"{failures} check(s) FAILED")
         return 1
@@ -116,7 +123,9 @@ def _check_decision_day(
     )
     for line in publish_mismatches:
         print(line)
-    return int(not forecast_ok) + int(not publish_ok)
+    return int(not forecast_ok) + int(not publish_ok) + _check_buyer_numbers(
+        independent, actuals, forecasts, delivery_day, payload
+    )
 
 
 def _check_january_scores(actuals: pd.DataFrame, forecasts: pd.DataFrame) -> int:
@@ -131,12 +140,24 @@ def _check_january_scores(actuals: pd.DataFrame, forecasts: pd.DataFrame) -> int
         },
     )
     if payload is None:
-        print("FAIL january mae api_request")
-        print("FAIL january rmse api_request")
-        print("FAIL january bias api_request")
-        return 3
+        for name in ("mae", "rmse", "bias", "n", "p10_error_mw", "p90_error_mw"):
+            print(f"FAIL january {name} api_request")
+        return 6
     failures = 0
-    for name, api_key in (("mae", "mae_mw"), ("rmse", "rmse_mw"), ("bias", "bias_mw")):
+    n_ok = scores["n"] == EXPECTED_JANUARY_PAIRS and payload["n"] == EXPECTED_JANUARY_PAIRS
+    _print_check(
+        n_ok,
+        "january n",
+        f"independent={scores['n']} api={payload['n']} expected={EXPECTED_JANUARY_PAIRS}",
+    )
+    failures += int(not n_ok)
+    for name, api_key in (
+        ("mae", "mae_mw"),
+        ("rmse", "rmse_mw"),
+        ("bias", "bias_mw"),
+        ("p10_error_mw", "p10_error_mw"),
+        ("p90_error_mw", "p90_error_mw"),
+    ):
         difference = _abs_diff(scores[name], payload[api_key])
         ok = difference is not None and difference <= TOLERANCE
         shown = "missing" if difference is None else f"{difference:.6e}"
@@ -165,8 +186,8 @@ def _decision_forecast(forecasts: pd.DataFrame, delivery_day: date) -> pd.DataFr
     return grid.merge(chosen, on="start_time_utc", how="left")
 
 
-def _january_scores(forecasts: pd.DataFrame, actuals: pd.DataFrame) -> dict[str, float | None]:
-    """MAE, RMSE, and bias of every January decision forecast that has an actual."""
+def _january_scores(forecasts: pd.DataFrame, actuals: pd.DataFrame) -> dict[str, float | int | None]:
+    """MAE, RMSE, bias, and error quantiles of every January decision pair."""
     day = JANUARY_START
     pieces: list[pd.DataFrame] = []
     while day <= JANUARY_END:
@@ -179,14 +200,215 @@ def _january_scores(forecasts: pd.DataFrame, actuals: pd.DataFrame) -> dict[str,
     # Rule: a missing forecast or a missing actual is excluded, not scored as zero.
     usable = paired.dropna(subset=["forecast_mw", "actual_mw"])
     if usable.empty:
-        return {"mae": None, "rmse": None, "bias": None}
+        return {
+            "n": 0,
+            "mae": None,
+            "rmse": None,
+            "bias": None,
+            "p10_error_mw": None,
+            "p90_error_mw": None,
+        }
     # Rule: error = forecast - actual. A positive value is an over-forecast.
     error = usable["forecast_mw"] - usable["actual_mw"]
+    quantiles = error.quantile([0.10, 0.90], interpolation="linear")
     return {
+        "n": len(usable),
         "mae": float(error.abs().mean()),
         "rmse": float((error.pow(2).mean()) ** 0.5),
         "bias": float(error.mean()),
+        "p10_error_mw": float(quantiles.iloc[0]),
+        "p90_error_mw": float(quantiles.iloc[1]),
     }
+
+
+def _check_buyer_numbers(
+    independent: pd.DataFrame,
+    actuals: pd.DataFrame,
+    forecasts: pd.DataFrame,
+    delivery_day: date,
+    payload: dict,
+) -> int:
+    """Compare history quantiles, day energy, and the firm-wind band with one decision response."""
+    label = delivery_day.isoformat()
+    p10, p90 = _history_quantiles(forecasts, actuals, delivery_day)
+    sample = payload["error_sample"]
+    kpis = payload["kpis"]
+    hours = _slot_hours(independent)
+    firm = _firm_mw(independent["forecast_mw"], p10, p90)
+    failures = _compare_value(f"decision {label} p10_error_mw", p10, sample["p10_error_mw"])
+    failures += _compare_value(f"decision {label} p90_error_mw", p90, sample["p90_error_mw"])
+    failures += _compare_value(
+        f"decision {label} expected_mwh",
+        _energy(independent["forecast_mw"], hours),
+        kpis["expected_mwh"],
+    )
+    failures += _compare_value(
+        f"decision {label} firm_wind_mwh",
+        _energy(firm, hours),
+        kpis["firm_wind_mwh"],
+    )
+    failures += _compare_band(label, independent, p10, p90, payload["points"])
+    return failures
+
+
+def _check_no_future_leak(actuals: pd.DataFrame, forecasts: pd.DataFrame) -> int:
+    """P10 and P90 for 15 Jan must ignore a 1,000 MW bump on every 16 Jan forecast."""
+    base = _history_quantiles(forecasts, actuals, LEAK_DAY)
+    bumped = forecasts.copy()
+    local_day = bumped["start_time_utc"].dt.tz_convert("Europe/London").dt.date
+    on_later_day = local_day == LEAK_LATER_DAY
+    bumped.loc[on_later_day, "forecast_mw"] = bumped.loc[on_later_day, "forecast_mw"] + LEAK_MW
+    leaked = _history_quantiles(bumped, actuals, LEAK_DAY)
+    failures = 0
+    for name, before, after in (
+        ("p10_error_mw", base[0], leaked[0]),
+        ("p90_error_mw", base[1], leaked[1]),
+    ):
+        difference = _abs_diff(before, after)
+        ok = difference == 0.0
+        shown = "missing" if difference is None else f"{difference:.6e}"
+        _print_check(
+            ok,
+            f"leakage {LEAK_DAY.isoformat()} {name}",
+            f"abs_diff={shown} unmodified={before} bumped_16_jan={after}",
+        )
+        failures += int(not ok)
+    return failures
+
+
+def _history_quantiles(
+    forecasts: pd.DataFrame,
+    actuals: pd.DataFrame,
+    before_day: date,
+) -> tuple[float | None, float | None]:
+    """P10 and P90 of decision-forecast errors on days strictly before ``before_day``.
+
+    Late December counts when it is before the selected day. A day counts only
+    when it has at least one paired error. Fewer than three such days means no band.
+    """
+    errors, days_used = _prior_errors(forecasts, actuals, before_day)
+    if days_used < MIN_HISTORY_DAYS or not errors:
+        return None, None
+    values = pd.Series(errors, dtype="float64").quantile([0.10, 0.90], interpolation="linear")
+    return float(values.iloc[0]), float(values.iloc[1])
+
+
+def _prior_errors(
+    forecasts: pd.DataFrame,
+    actuals: pd.DataFrame,
+    before_day: date,
+) -> tuple[list[float], int]:
+    local_days = forecasts["start_time_utc"].dt.tz_convert("Europe/London").dt.date
+    candidate_days = sorted({day for day in local_days if day < before_day})
+    errors: list[float] = []
+    days_used = 0
+    for day in candidate_days:
+        paired = _paired_errors(forecasts, actuals, day)
+        if paired.empty:
+            continue
+        days_used += 1
+        errors.extend(float(value) for value in paired.tolist())
+    return errors, days_used
+
+
+def _paired_errors(forecasts: pd.DataFrame, actuals: pd.DataFrame, delivery_day: date) -> pd.Series:
+    selected = _decision_forecast(forecasts, delivery_day)
+    paired = selected.merge(
+        actuals[["start_time_utc", "actual_mw"]],
+        on="start_time_utc",
+        how="left",
+    )
+    usable = paired.dropna(subset=["forecast_mw", "actual_mw"])
+    return usable["forecast_mw"] - usable["actual_mw"]
+
+
+def _slot_hours(frame: pd.DataFrame) -> float:
+    """Shortest gap between forecast start times. Hourly WINDFOR is 1.0 h."""
+    present = frame.loc[frame["forecast_mw"].notna(), "start_time_utc"].dropna().sort_values()
+    if len(present) >= 2:
+        gaps = present.diff().dt.total_seconds().dropna() / 3600
+        positive = gaps[gaps > 0]
+        if not positive.empty:
+            return float(positive.min())
+    if len(present) == 1 and pd.Timestamp(present.iloc[0]).minute == 30:
+        return 0.5
+    return 1.0
+
+
+def _firm_mw(forecast_mw: pd.Series, p10: float | None, p90: float | None) -> pd.Series:
+    """Firm wind per slot is max(0, forecast - P90 error). Missing forecasts stay missing."""
+    if p10 is None or p90 is None:
+        return pd.Series(pd.NA, index=forecast_mw.index, dtype="Float64")
+    return (forecast_mw - p90).clip(lower=0)
+
+
+def _energy(values: pd.Series, slot_hours: float) -> float | None:
+    present = values.dropna()
+    if present.empty:
+        return None
+    return float((present * slot_hours).sum())
+
+
+def _band_edges(
+    forecast_mw: float | None,
+    p10: float | None,
+    p90: float | None,
+) -> tuple[float | None, float | None]:
+    if forecast_mw is None or p10 is None or p90 is None:
+        return None, None
+    return max(0.0, forecast_mw - p90), forecast_mw - p10
+
+
+def _compare_band(
+    label: str,
+    frame: pd.DataFrame,
+    p10: float | None,
+    p90: float | None,
+    points: list[dict],
+) -> int:
+    api_points = {point["start_time"]: point for point in points}
+    mismatches = {"band_low_mw": [], "band_high_mw": []}
+    missing_slots: list[str | None] = []
+    for row in frame.itertuples(index=False):
+        start = _iso_z(row.start_time_utc)
+        forecast = None if pd.isna(row.forecast_mw) else float(row.forecast_mw)
+        own_low, own_high = _band_edges(forecast, p10, p90)
+        api_point = api_points.get(start)
+        if api_point is None:
+            missing_slots.append(start)
+            continue
+        for name, own, api_value in (
+            ("band_low_mw", own_low, api_point["band_low_mw"]),
+            ("band_high_mw", own_high, api_point["band_high_mw"]),
+        ):
+            difference = _abs_diff(own, api_value)
+            if difference is None or difference > TOLERANCE:
+                mismatches[name].append((start, own, api_value, difference))
+    failures = 0
+    for name, rows in mismatches.items():
+        ok = not rows and not missing_slots
+        finite = [difference for _, _, _, difference in rows if difference is not None]
+        max_diff = max(finite, default=0.0)
+        _print_check(
+            ok,
+            f"decision {label} {name}",
+            f"max_abs_diff={max_diff:.6e} mismatches={len(rows) + len(missing_slots)}",
+        )
+        failures += int(not ok)
+        for start, own, api_value, difference in rows:
+            shown = "missing" if difference is None else f"{difference:.6e}"
+            print(f"  {start} independent={own} api={api_value} abs_diff={shown}")
+    for start in missing_slots:
+        print(f"  {start} missing from the API response")
+    return failures
+
+
+def _compare_value(name: str, independent: float | None, api_value: float | None) -> int:
+    difference = _abs_diff(independent, api_value)
+    ok = difference is not None and difference <= TOLERANCE
+    shown = "missing" if difference is None else f"{difference:.6e}"
+    _print_check(ok, name, f"abs_diff={shown} independent={independent} api={api_value}")
+    return int(not ok)
 
 
 def _cutoff_utc(delivery_day: date) -> pd.Timestamp:

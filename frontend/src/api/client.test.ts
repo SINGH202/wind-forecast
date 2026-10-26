@@ -20,13 +20,13 @@ test('each endpoint is requested on the relative /api path', async () => {
   await getMeta()
   await getDecision({ delivery_day: '2026-01-15', cutoff: '09:00' })
   await getSeries({
-    start_day: '2026-01-01',
-    end_day: '2026-01-31',
+    start_day: '2026-01-02',
+    end_day: '2026-02-01',
     horizon_hours: 24,
   })
   await getMetrics({
-    start_day: '2026-01-01',
-    end_day: '2026-01-31',
+    start_day: '2026-01-02',
+    end_day: '2026-02-01',
     cutoff: '09:00',
   })
 
@@ -37,8 +37,8 @@ test('each endpoint is requested on the relative /api path', async () => {
     '/api/health',
     '/api/meta',
     '/api/decision?delivery_day=2026-01-15&cutoff=09%3A00',
-    '/api/series?start_day=2026-01-01&end_day=2026-01-31&horizon_hours=24',
-    '/api/metrics?start_day=2026-01-01&end_day=2026-01-31&cutoff=09%3A00',
+    '/api/series?start_day=2026-01-02&end_day=2026-02-01&horizon_hours=24',
+    '/api/metrics?start_day=2026-01-02&end_day=2026-02-01&cutoff=09%3A00',
   ])
 })
 

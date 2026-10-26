@@ -51,7 +51,7 @@ export default function App() {
           ) : meta.data.delivery_days.length === 0 ? (
             <EmptyState
               message="No wind data for this selection."
-              hint="The snapshot has no January delivery days."
+              hint="The snapshot has no delivery days from 2 January to 1 February 2026."
             />
           ) : (
             <TabBody

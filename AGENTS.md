@@ -2,7 +2,7 @@
 Web app for a UK energy utility's day-ahead power buying team. It shows the latest
 wind forecast available at decision time and quantifies forecast accuracy.
 Data: Elexon BMRS only. FUELHH (actuals, fuelType == WIND) and WINDFOR (forecasts).
-Scope: delivery days in January 2026.
+Scope: delivery days from 2 January to 1 February 2026. Decisions for those days are made in January. Band history may include earlier delivery days.
 
 # Stack
 - Backend: Python 3.11, FastAPI, pandas, pydantic v2, httpx, pytest, ruff

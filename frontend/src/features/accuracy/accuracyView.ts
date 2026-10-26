@@ -1,8 +1,8 @@
 import type { MetricsResponse } from '../../api/client.ts'
 import { formatMw } from '../../design/format.ts'
 
-export const DEFAULT_ACCURACY_START = '2026-01-01'
-export const DEFAULT_ACCURACY_END = '2026-01-31'
+export const DEFAULT_ACCURACY_START = '2026-01-02'
+export const DEFAULT_ACCURACY_END = '2026-02-01'
 export const DEFAULT_CUTOFF = '09:00'
 
 export type BucketMetric = MetricsResponse['by_wind_level'][number]

@@ -4,7 +4,7 @@ Rules the app applies. Sample patterns cited here are from `docs/DATA_NOTES.md`.
 
 ## Scope
 
-January 2026 delivery days only, at national level. The only inputs are Elexon BMRS FUELHH and WINDFOR. Demand and price data are out of scope.
+Delivery days are 2 January through 1 February 2026, at national level. A decision for delivery day D is made on D-1, so these are the days decided in January. The only inputs are Elexon BMRS FUELHH and WINDFOR. Demand and price data are out of scope. The P10/P90 band may still use earlier delivery days, including late December.
 
 ## Decision rule
 

@@ -90,13 +90,12 @@ def test_meta_reports_coverage_and_assumptions(tmp_path: Path) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["delivery_days"] == [
-        "2026-01-01",
         "2026-01-02",
         "2026-01-03",
         "2026-01-04",
     ]
-    assert body["delivery_day_count"] == 4
-    assert body["min_start_time"] == "2026-01-01T00:00:00Z"
+    assert body["delivery_day_count"] == 3
+    assert body["min_start_time"] == "2026-01-02T00:00:00Z"
     assert body["max_start_time"] == "2026-01-04T00:00:00Z"
     assert body["default_cutoff"] == "09:00"
     assert body["cutoff_options"] == ["08:00", "08:30", "09:00"]
@@ -164,10 +163,11 @@ def test_decision_flags_insufficient_history(tmp_path: Path) -> None:
 
 
 def test_decision_rejects_a_day_outside_the_snapshot(tmp_path: Path) -> None:
-    """February, and a January day past the loaded span, are both invalid."""
+    """1 January, 2 February, and a day past the loaded span are invalid."""
     client = _client(tmp_path)
 
-    february = client.get("/api/decision", params={"delivery_day": "2026-02-01", "cutoff": "09:00"})
+    february = client.get("/api/decision", params={"delivery_day": "2026-02-02", "cutoff": "09:00"})
+    first = client.get("/api/decision", params={"delivery_day": "2026-01-01", "cutoff": "09:00"})
     later = client.get("/api/decision", params={"delivery_day": "2026-01-20", "cutoff": "09:00"})
     cutoff = client.get("/api/decision", params={"delivery_day": "2026-01-04", "cutoff": "07:00"})
     after_close = client.get(
@@ -177,6 +177,8 @@ def test_decision_rejects_a_day_outside_the_snapshot(tmp_path: Path) -> None:
 
     assert february.status_code == 400
     assert february.json() == {"detail": "delivery_day is invalid"}
+    assert first.status_code == 400
+    assert first.json() == {"detail": "delivery_day is invalid"}
     assert later.status_code == 400
     assert later.json() == {"detail": "delivery_day is invalid"}
     assert cutoff.status_code == 400
@@ -184,6 +186,38 @@ def test_decision_rejects_a_day_outside_the_snapshot(tmp_path: Path) -> None:
     assert after_close.status_code == 400
     assert after_close.json() == {"detail": "cutoff is invalid"}
     assert garbage.status_code == 422
+
+
+def test_decision_accepts_1_february_when_the_snapshot_has_it(tmp_path: Path) -> None:
+    """1 February is a delivery day. 1 January is earlier history, not a delivery day."""
+    actuals = pd.DataFrame(
+        {
+            "start_time_utc": [_utc("2026-01-01T00:00:00Z"), _utc("2026-02-01T00:00:00Z")],
+            "actual_mw": [40.0, 50.0],
+        }
+    )
+    forecasts = pd.DataFrame(
+        {
+            "start_time_utc": [_utc("2026-02-01T00:00:00Z")],
+            "publish_time_utc": [_utc("2026-01-31T08:00:00Z")],
+            "forecast_mw": [60.0],
+            "horizon_hours": [16.0],
+        }
+    )
+    actuals.to_parquet(tmp_path / "actuals.parquet", index=False)
+    forecasts.to_parquet(tmp_path / "forecasts.parquet", index=False)
+    settings = Settings(data_dir=tmp_path, decision_cutoff_time="09:00", timezone="Europe/London")
+    client = TestClient(create_app(settings))
+
+    accepted = client.get("/api/decision", params={"delivery_day": "2026-02-01", "cutoff": "09:00"})
+    rejected = client.get("/api/decision", params={"delivery_day": "2026-01-01", "cutoff": "09:00"})
+    meta = client.get("/api/meta")
+
+    assert accepted.status_code == 200
+    assert accepted.json()["points"][0]["forecast_mw"] == 60
+    assert rejected.status_code == 400
+    assert rejected.json() == {"detail": "delivery_day is invalid"}
+    assert meta.json()["delivery_days"] == ["2026-02-01"]
 
 
 def test_series_horizon_default_is_latest_and_24_keeps_the_early_publish(tmp_path: Path) -> None:
@@ -209,7 +243,7 @@ def test_series_rejects_a_reversed_range_and_a_horizon_past_48(tmp_path: Path) -
 
     reversed_range = client.get(
         "/api/series",
-        params={"start_day": "2026-01-04", "end_day": "2026-01-01", "horizon_hours": 0},
+        params={"start_day": "2026-01-04", "end_day": "2026-01-02", "horizon_hours": 0},
     )
     too_far = client.get(
         "/api/series",

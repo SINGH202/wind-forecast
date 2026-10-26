@@ -14,8 +14,8 @@ from pathlib import Path
 import pandas as pd
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-JANUARY_START = date(2026, 1, 1)
-JANUARY_END = date(2026, 1, 31)
+JANUARY_START = date(2026, 1, 2)
+JANUARY_END = date(2026, 2, 1)
 SAMPLE_DAYS = (date(2026, 1, 5), date(2026, 1, 15), date(2026, 1, 28))
 SHIFTS_MINUTES = (-60, -30, 0, 30, 60)
 PAIRS_PER_DAY = 6
@@ -55,7 +55,7 @@ def _load_snapshot(data_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def _january_decision(forecasts: pd.DataFrame, actuals: pd.DataFrame) -> pd.DataFrame:
-    """Decision forecast for every January delivery day, paired at shift 0."""
+    """Decision forecast for every delivery day from 2 January to 1 February."""
     day = JANUARY_START
     pieces: list[pd.DataFrame] = []
     while day <= JANUARY_END:

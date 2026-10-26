@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from app.constants import SCOPE_END, SCOPE_START
 from app.services.normalize import ACTUAL_COLUMNS, FORECAST_COLUMNS
 
 
@@ -22,7 +23,7 @@ class Dataset:
     max_start_time: pd.Timestamp | None
 
     def covers(self, day: date) -> bool:
-        """True when ``day`` sits inside the January 2026 span that was loaded."""
+        """True when ``day`` sits inside the loaded delivery-day span."""
         if not self.delivery_days:
             return False
         return self.delivery_days[0] <= day <= self.delivery_days[-1]
@@ -40,7 +41,7 @@ def load_dataset(data_dir: Path) -> Dataset:
     """Read actuals, forecasts, and the optional manifest. Missing files are empty."""
     actuals = _read_frame(data_dir / "actuals.parquet", ACTUAL_COLUMNS)
     forecasts = _read_frame(data_dir / "forecasts.parquet", FORECAST_COLUMNS)
-    days = sorted(_january_days(actuals) | _january_days(forecasts))
+    days = sorted(_scope_days(actuals) | _scope_days(forecasts))
     return Dataset(
         actuals=actuals,
         forecasts=forecasts,
@@ -74,11 +75,17 @@ def _read_manifest(path: Path) -> dict[str, object] | None:
     return payload
 
 
-def _january_days(frame: pd.DataFrame) -> set[date]:
+def _scope_days(frame: pd.DataFrame) -> set[date]:
+    """Delivery days from 2 January through 1 February 2026.
+
+    Earlier rows stay in the frame so the error band can use them. They are
+    not offered as delivery days.
+    """
     if frame.empty or "start_time_utc" not in frame:
         return set()
     starts = frame["start_time_utc"].dt.tz_convert("UTC")
-    chosen = starts.loc[(starts.dt.year == 2026) & (starts.dt.month == 1)]
+    dates = starts.dt.date
+    chosen = starts.loc[(dates >= SCOPE_START) & (dates <= SCOPE_END)]
     return set(chosen.dt.date)
 
 

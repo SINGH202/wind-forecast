@@ -1,8 +1,8 @@
 # PRD: day-ahead wind forecast portal
 
-Pilot for a day-ahead power trader or analyst. January 2026 only. National wind only. Inputs are Elexon BMRS FUELHH (`fuelType` `WIND`) and WINDFOR. No demand, prices, other weather, or login.
+Pilot for a day-ahead power trader or analyst. Delivery days are 2 January through 1 February 2026, the days decided in January. National wind only. Inputs are Elexon BMRS FUELHH (`fuelType` `WIND`) and WINDFOR. No demand, prices, other weather, or login.
 
-A delivery day D is the 48 half-hours whose `startTime` falls on that UTC date, from `D 00:00Z` to `D 23:30Z`. That matches the sample, where `settlementDate` equals the UTC date of `startTime` and period 1 is `00:00`. Charts and hour-of-day labels use Europe/London. Stored timestamps are the sample strings treated as UTC (they all end in `Z`). January 2026 is GMT, so the London clock matches UTC. The cutoff is still built in Europe/London and then converted to UTC before any comparison.
+A delivery day D is the 48 half-hours whose `startTime` falls on that UTC date, from `D 00:00Z` to `D 23:30Z`. That matches the sample, where `settlementDate` equals the UTC date of `startTime` and period 1 is `00:00`. Charts and hour-of-day labels use Europe/London. Stored timestamps are the sample strings treated as UTC (they all end in `Z`). 2 January through 1 February 2026 is GMT, so the London clock matches UTC. The cutoff is still built in Europe/London and then converted to UTC before any comparison. The error band may use delivery days before this window, including late December.
 
 Power is shown in MW. An hourly WINDFOR slot contributes `MW × 1.0` MWh. A forecast that lands on both :00 and :30 contributes `MW × 0.5` MWh. Missing slots are left empty. They are never copied, interpolated, or dropped from the 48-row grid.
 
@@ -135,7 +135,7 @@ MW
 
 Horizon view — not the decision cutoff
 
-From [ 2026-01-01 ]  To [ 2026-01-31 ]    Horizon  [====|====]  12 h
+From [ 2026-01-10 ]  To [ 2026-01-16 ]    Horizon  [====|====]  12 h
          latest forecast published at least 12 h before each half-hour
 
 MW |  ---- forecast    —— actual
@@ -147,7 +147,7 @@ MW |  ---- forecast    —— actual
 ```
 [ Decision ] [ Explorer ] [ Accuracy ]
 
-From [ 2026-01-01 ]  To [ 2026-01-31 ]   Cutoff [ 09:00 London v ]
+From [ 2026-01-02 ]  To [ 2026-02-01 ]   Cutoff [ 09:00 London v ]
 Headline numbers use the decision forecast at this cutoff.
 
 [ MAE  800 MW ] [ RMSE  1 100 MW ] [ Bias  +200 MW ] [ nMAE  0.08 ]
@@ -169,14 +169,14 @@ Day          MAE MW    Bias MW    Pairs
 
 ## API
 
-JSON. Times in responses are UTC `YYYY-MM-DDTHH:MM:SSZ` plus a London display string where listed. An unknown query value, a day outside January 2026, `start_day > end_day`, a cutoff not in the three choices, or `horizon_hours` outside 0–48 returns 400 `{ "detail": "<parameter> is invalid" }`. A selection with no rows returns 200 and null metrics, not 404.
+JSON. Times in responses are UTC `YYYY-MM-DDTHH:MM:SSZ` plus a London display string where listed. An unknown query value, a day outside 2 January to 1 February 2026, `start_day > end_day`, a cutoff not in the three choices, or `horizon_hours` outside 0–48 returns 400 `{ "detail": "<parameter> is invalid" }`. A selection with no rows returns 200 and null metrics, not 404.
 
 ### `GET /api/meta`
 
 No query.
 
 ```
-delivery_days: string[]          # UTC dates in Jan 2026 that have FUELHH wind or WINDFOR
+delivery_days: string[]          # UTC dates from 2 Jan through 1 Feb 2026 that have FUELHH wind or WINDFOR
 default_cutoff: "09:00"             # value of DECISION_CUTOFF_TIME
 cutoff_options: ["08:00","08:30","09:00"]
 timezone: "Europe/London"
@@ -208,7 +208,7 @@ flags: string[]    # "no_prior_days_for_band", "missing_forecast_slots",
                    # "missing_actual_slots", "negative_firm_wind"
 ```
 
-### `GET /api/series?start_day=2026-01-01&end_day=2026-01-31&horizon_hours=0`
+### `GET /api/series?start_day=2026-01-02&end_day=2026-02-01&horizon_hours=0`
 
 `horizon_hours` defaults to 0.
 
@@ -220,7 +220,7 @@ points[]:    # one per half-hour in the range, in start_time order
   missing_forecast, missing_actual
 ```
 
-### `GET /api/metrics?start_day=2026-01-01&end_day=2026-01-31&cutoff=09:00`
+### `GET /api/metrics?start_day=2026-01-02&end_day=2026-02-01&cutoff=09:00`
 
 `cutoff` defaults to `DECISION_CUTOFF_TIME` (`09:00`) and must be one of the three allowed times.
 
@@ -244,4 +244,4 @@ Bucket `mae_mw` and `bias_mw` are null when that bucket's `n` is 0.
 
 ## Non-goals
 
-No demand and no residual demand. No prices. No weather beyond what is already inside FUELHH and WINDFOR. No other fuel types. No dates outside January 2026. No authentication.
+No demand and no residual demand. No prices. No weather beyond what is already inside FUELHH and WINDFOR. No other fuel types. No delivery days outside 2 January to 1 February 2026. No authentication.

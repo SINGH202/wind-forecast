@@ -51,7 +51,7 @@ test('chart rows keep gaps as null and define error as forecast minus actual', (
 })
 
 test('the default range stays inside the snapshot coverage', () => {
-  expect(initialRange(['2026-01-01', '2026-01-31'])).toEqual({
+  expect(initialRange(['2026-01-02', '2026-02-01'])).toEqual({
     start: '2026-01-10',
     end: '2026-01-16',
   })

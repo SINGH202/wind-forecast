@@ -151,7 +151,7 @@ function MetricsBody({
     return (
       <EmptyState
         message="No wind data for this selection."
-        hint="Try another range inside January 2026."
+        hint="Try another range from 2 January to 1 February 2026."
       />
     )
   }

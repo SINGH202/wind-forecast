@@ -89,7 +89,8 @@ function Assumptions() {
   return (
     <ul className={`list-disc pl-5 ${space.xs}`}>
       <Typography variant="li">
-        The desk covers January 2026 only, for Great Britain as a whole.
+        The desk covers delivery days from 2 January to 1 February 2026, the
+        days decided in January, for Great Britain as a whole.
       </Typography>
       <Typography variant="li">
         Actual wind is Elexon FUELHH generation for fuel type WIND, every
