@@ -9,6 +9,7 @@ import {
 } from './client.ts'
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
@@ -42,9 +43,56 @@ test('each endpoint is requested on the relative /api path', async () => {
   ])
 })
 
+test('a server failure is retried 3 times with backoff, then succeeds', async () => {
+  vi.useFakeTimers()
+  const fetchMock = vi
+    .fn()
+    .mockRejectedValueOnce(new TypeError('offline'))
+    .mockResolvedValueOnce(errorResponse(503))
+    .mockResolvedValueOnce(errorResponse(502))
+    .mockResolvedValueOnce(jsonResponse())
+  vi.stubGlobal('fetch', fetchMock)
+
+  const pending = getHealth()
+  await vi.runAllTimersAsync()
+  await pending
+
+  expect(fetchMock).toHaveBeenCalledTimes(4)
+  vi.useRealTimers()
+})
+
+test('a client error is not retried', async () => {
+  const fetchMock = vi.fn(async () => errorResponse(400))
+  vi.stubGlobal('fetch', fetchMock)
+
+  await expect(getHealth()).rejects.toMatchObject({ status: 400 })
+  expect(fetchMock).toHaveBeenCalledTimes(1)
+})
+
+test('gives up after 3 retries', async () => {
+  vi.useFakeTimers()
+  const fetchMock = vi.fn(async () => errorResponse(503))
+  vi.stubGlobal('fetch', fetchMock)
+
+  const pending = getHealth().then(
+    () => 'ok',
+    (error: unknown) => error,
+  )
+  await vi.runAllTimersAsync()
+  const error = await pending
+
+  expect(error).toMatchObject({ status: 503 })
+  expect(fetchMock).toHaveBeenCalledTimes(4)
+  vi.useRealTimers()
+})
+
 function jsonResponse(): Response {
   return new Response('{}', {
     status: 200,
     headers: { 'content-type': 'application/json' },
   })
+}
+
+function errorResponse(status: number): Response {
+  return new Response('unavailable', { status })
 }
