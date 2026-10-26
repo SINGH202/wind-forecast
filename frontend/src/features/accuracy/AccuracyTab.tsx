@@ -165,9 +165,6 @@ function MetricsBody({
           : 'Bias is zero for this range.'
   return (
     <div className={space.stack} aria-busy={isFetching}>
-      {isFetching ? (
-        <Typography variant="small">Loading wind data.</Typography>
-      ) : null}
       <div className={`flex flex-wrap ${space.md}`}>
         <KpiCard label="MAE" value={formatMw(data.mae_mw)} unit="MW" />
         <KpiCard label="RMSE" value={formatMw(data.rmse_mw)} unit="MW" />

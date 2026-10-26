@@ -95,9 +95,9 @@ export function DecisionTab({
         </label>
       </div>
       <Typography variant="bodyMedium">{sentence}</Typography>
-      {decision.isLoading || decision.isFetching ? (
+      {!decision.data && decision.isLoading ? (
         <LoadingState />
-      ) : decision.isError ? (
+      ) : decision.isError && !decision.data ? (
         <ErrorState
           message={errorMessage(decision.error)}
           onRetry={() => {

@@ -154,9 +154,6 @@ function SeriesBody({
   }
   return (
     <div className={space.stack} aria-busy={isFetching}>
-      {isFetching ? (
-        <Typography variant="small">Loading wind data.</Typography>
-      ) : null}
       <SeriesChart points={points} />
     </div>
   )

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { getDecision } from '../../api/client.ts'
 
@@ -9,5 +9,6 @@ export function useDecision(deliveryDay: string, cutoff: string) {
     queryFn: ({ signal }) =>
       getDecision({ delivery_day: deliveryDay, cutoff }, signal),
     enabled: deliveryDay.length > 0,
+    placeholderData: keepPreviousData,
   })
 }
