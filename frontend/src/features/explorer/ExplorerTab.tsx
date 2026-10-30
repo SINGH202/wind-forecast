@@ -7,6 +7,7 @@ import { EmptyState } from '../../components/EmptyState.tsx'
 import { ErrorState } from '../../components/ErrorState.tsx'
 import { LoadingState } from '../../components/LoadingState.tsx'
 import { Typography } from '../../components/Typography.tsx'
+import { fieldClass } from '../../design/fields.ts'
 import { color, space } from '../../design/tokens.ts'
 import { useDebouncedValue } from '../../shared/hooks/useDebouncedValue.ts'
 import { SeriesChart } from './SeriesChart.tsx'
@@ -48,7 +49,7 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
           <input
             id="explorer-start"
             type="date"
-            className={inputClass}
+            className={fieldClass}
             min={bounds?.min}
             max={bounds?.max}
             value={startDay}
@@ -63,7 +64,7 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
           <input
             id="explorer-end"
             type="date"
-            className={inputClass}
+            className={fieldClass}
             min={bounds?.min}
             max={bounds?.max}
             value={endDay}
@@ -118,8 +119,6 @@ export function ExplorerTab({ deliveryDays }: ExplorerTabProps) {
     </div>
   )
 }
-
-const inputClass = `w-full max-w-full rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink sm:w-auto ${color.focus}`
 
 type SeriesBodyProps = {
   isLoading: boolean

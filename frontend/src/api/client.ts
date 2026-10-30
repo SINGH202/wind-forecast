@@ -25,8 +25,17 @@ export class ApiError extends Error {
   }
 }
 
+const DEFAULT_RETRIES = 3
+const WAKE_RETRIES = 5
+const ATTEMPT_TIMEOUT_MS = 15_000
+
 export function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
   return getJson('/api/health', signal)
+}
+
+/** Ping the API until it answers. Used when Render may still be waking. */
+export function wakeApi(signal?: AbortSignal): Promise<HealthResponse> {
+  return getJson('/api/health', signal, WAKE_RETRIES)
 }
 
 export function getMeta(signal?: AbortSignal): Promise<MetaResponse> {
@@ -90,14 +99,16 @@ function toQuery(
   return text.length > 0 ? `?${text}` : ''
 }
 
-const MAX_RETRIES = 3
-
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function getJson<T>(
+  path: string,
+  signal?: AbortSignal,
+  maxRetries: number = DEFAULT_RETRIES,
+): Promise<T> {
   for (let attempt = 0; ; attempt += 1) {
     try {
       return await readJson<T>(path, signal)
     } catch (error) {
-      if (attempt >= MAX_RETRIES || !canRetry(error, signal)) {
+      if (attempt >= maxRetries || !canRetry(error, signal)) {
         throw error
       }
       await wait(backoffMs(attempt), signal)
@@ -106,11 +117,26 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 async function readJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(path, { signal })
-  if (!response.ok) {
-    throw new ApiError(response.status, await response.text())
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS)
+  const onParentAbort = () => controller.abort()
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort()
+    } else {
+      signal.addEventListener('abort', onParentAbort, { once: true })
+    }
   }
-  return (await response.json()) as T
+  try {
+    const response = await fetch(path, { signal: controller.signal })
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.text())
+    }
+    return (await response.json()) as T
+  } finally {
+    clearTimeout(timer)
+    signal?.removeEventListener('abort', onParentAbort)
+  }
 }
 
 function backoffMs(attempt: number): number {
@@ -119,16 +145,21 @@ function backoffMs(attempt: number): number {
 
 function canRetry(error: unknown, signal?: AbortSignal): boolean {
   if (signal?.aborted || isAbortError(error)) {
-    return false
+    // Per-attempt timeouts abort a hung cold start; keep retrying those.
+    return isTimeoutAbort(error) && !signal?.aborted
   }
   if (error instanceof ApiError) {
-    return error.status >= 500
+    return error.status >= 500 || error.status === 404 || error.status === 408
   }
   return error instanceof TypeError
 }
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError'
+}
+
+function isTimeoutAbort(error: unknown): boolean {
+  return isAbortError(error) && error instanceof DOMException
 }
 
 function wait(ms: number, signal?: AbortSignal): Promise<void> {

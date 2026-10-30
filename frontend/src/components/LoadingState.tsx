@@ -4,25 +4,34 @@ import { color, space } from '../design/tokens.ts'
 import { Typography } from './Typography.tsx'
 
 const WAKE_AFTER_MS = 3000
-const WAKE_MESSAGE = 'Waking up the data service, this can take up to a minute'
+export const WAKE_MESSAGE =
+  'Waking up the data service, this can take up to a minute'
 
 type LoadingStateProps = {
   message?: string
+  /** When true, show the wake-up spinner and message immediately. */
+  waking?: boolean
 }
 
 export function LoadingState({
   message = 'Loading wind data.',
+  waking = false,
 }: LoadingStateProps) {
-  const [waking, setWaking] = useState(false)
+  const [slow, setSlow] = useState(false)
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setWaking(true), WAKE_AFTER_MS)
+    if (waking) {
+      return
+    }
+    const timer = window.setTimeout(() => setSlow(true), WAKE_AFTER_MS)
     return () => window.clearTimeout(timer)
-  }, [])
+  }, [waking])
+
+  const showWake = waking || slow
 
   return (
     <div className={space.stack} aria-busy="true" aria-live="polite">
-      {waking ? (
+      {showWake ? (
         <div className="flex items-center gap-3">
           <div
             className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-line border-t-forecast"
