@@ -6,6 +6,7 @@ import {
   getMeta,
   getMetrics,
   getSeries,
+  wakeApi,
 } from './client.ts'
 
 afterEach(() => {
@@ -58,7 +59,21 @@ test('a server failure is retried 3 times with backoff, then succeeds', async ()
   await pending
 
   expect(fetchMock).toHaveBeenCalledTimes(4)
-  vi.useRealTimers()
+})
+
+test('wakeApi retries a 404 while the proxy or service is coming up', async () => {
+  vi.useFakeTimers()
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(errorResponse(404))
+    .mockResolvedValueOnce(errorResponse(503))
+    .mockResolvedValueOnce(jsonResponse({ status: 'ok' }))
+  vi.stubGlobal('fetch', fetchMock)
+
+  const pending = wakeApi()
+  await vi.runAllTimersAsync()
+  await expect(pending).resolves.toEqual({ status: 'ok' })
+  expect(fetchMock).toHaveBeenCalledTimes(3)
 })
 
 test('a client error is not retried', async () => {
@@ -83,11 +98,10 @@ test('gives up after 3 retries', async () => {
 
   expect(error).toMatchObject({ status: 503 })
   expect(fetchMock).toHaveBeenCalledTimes(4)
-  vi.useRealTimers()
 })
 
-function jsonResponse(): Response {
-  return new Response('{}', {
+function jsonResponse(body: object = {}): Response {
+  return new Response(JSON.stringify(body), {
     status: 200,
     headers: { 'content-type': 'application/json' },
   })

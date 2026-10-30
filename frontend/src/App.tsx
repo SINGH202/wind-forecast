@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { ApiError, getMeta, type MetaResponse } from './api/client.ts'
+import { ApiError, getMeta, wakeApi, type MetaResponse } from './api/client.ts'
 import { EmptyState } from './components/EmptyState.tsx'
 import { ErrorState } from './components/ErrorState.tsx'
 import { Footer } from './components/Footer.tsx'
@@ -16,14 +16,21 @@ import { useDeskTab } from './shell/useDeskTab.ts'
 
 export default function App() {
   const [tab, selectTab] = useDeskTab()
+  // Render free tier sleeps. Wake /api/health first, then load desk meta.
+  const wake = useQuery({
+    queryKey: ['wake'],
+    queryFn: ({ signal }) => wakeApi(signal),
+    staleTime: 5 * 60_000,
+  })
   const meta = useQuery({
     queryKey: ['meta'],
     queryFn: ({ signal }) => getMeta(signal),
+    enabled: wake.isSuccess,
   })
 
   const coverage = meta.data
     ? formatCoverage(meta.data)
-    : meta.isError
+    : wake.isError || meta.isError
       ? 'Coverage unavailable'
       : 'Loading coverage'
   const cutoff = meta.data ? formatCutoff(meta.data) : 'Default cutoff —'
@@ -39,33 +46,77 @@ export default function App() {
           tabIndex={0}
           className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-forecast"
         >
-          {meta.isPending ? (
-            <LoadingState />
-          ) : meta.isError ? (
-            <ErrorState
-              message={errorMessage(meta.error)}
-              onRetry={() => {
-                void meta.refetch()
-              }}
-            />
-          ) : meta.data.delivery_days.length === 0 ? (
-            <EmptyState
-              message="No wind data for this selection."
-              hint="The snapshot has no delivery days from 2 January to 1 February 2026."
-            />
-          ) : (
-            <TabBody
-              tab={tab}
-              deliveryDays={meta.data.delivery_days}
-              cutoffOptions={meta.data.cutoff_options}
-              defaultCutoff={meta.data.default_cutoff}
-              timezone={meta.data.timezone}
-            />
-          )}
+          <DeskBody tab={tab} wake={wake} meta={meta} />
         </div>
       </main>
       <Footer coverage={coverage} cutoff={cutoff} />
     </div>
+  )
+}
+
+function DeskBody({
+  tab,
+  wake,
+  meta,
+}: {
+  tab: DeskTab
+  wake: {
+    isSuccess: boolean
+    isError: boolean
+    isFetching: boolean
+    error: unknown
+    refetch: () => unknown
+  }
+  meta: {
+    isPending: boolean
+    isError: boolean
+    error: unknown
+    data: MetaResponse | undefined
+    refetch: () => unknown
+  }
+}) {
+  if (!wake.isSuccess) {
+    if (wake.isError && !wake.isFetching) {
+      return (
+        <ErrorState
+          message={errorMessage(wake.error)}
+          onRetry={() => {
+            void wake.refetch()
+          }}
+        />
+      )
+    }
+    return <LoadingState waking />
+  }
+  if (meta.isPending) {
+    return <LoadingState />
+  }
+  if (meta.isError) {
+    return (
+      <ErrorState
+        message={errorMessage(meta.error)}
+        onRetry={() => {
+          void meta.refetch()
+        }}
+      />
+    )
+  }
+  if (!meta.data || meta.data.delivery_days.length === 0) {
+    return (
+      <EmptyState
+        message="No wind data for this selection."
+        hint="The snapshot has no delivery days from 2 January to 1 February 2026."
+      />
+    )
+  }
+  return (
+    <TabBody
+      tab={tab}
+      deliveryDays={meta.data.delivery_days}
+      cutoffOptions={meta.data.cutoff_options}
+      defaultCutoff={meta.data.default_cutoff}
+      timezone={meta.data.timezone}
+    />
   )
 }
 

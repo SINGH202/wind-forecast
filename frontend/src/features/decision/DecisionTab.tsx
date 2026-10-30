@@ -8,9 +8,10 @@ import { ErrorState } from '../../components/ErrorState.tsx'
 import { InfoPanel } from '../../components/InfoPanel.tsx'
 import { KpiCard } from '../../components/KpiCard.tsx'
 import { LoadingState } from '../../components/LoadingState.tsx'
+import { SelectField } from '../../components/SelectField.tsx'
 import { Typography } from '../../components/Typography.tsx'
 import { formatHours, formatMwh } from '../../design/format.ts'
-import { color, space } from '../../design/tokens.ts'
+import { space } from '../../design/tokens.ts'
 import { DecisionChart } from './DecisionChart.tsx'
 import {
   ageSpread,
@@ -62,9 +63,8 @@ export function DecisionTab({
           htmlFor="decision-day"
         >
           <Typography variant="small">Delivery day</Typography>
-          <select
+          <SelectField
             id="decision-day"
-            className={inputClass}
             value={day}
             onChange={(event) => setDay(event.target.value)}
           >
@@ -73,16 +73,15 @@ export function DecisionTab({
                 {option}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
         <label
           className="flex w-full min-w-0 flex-col gap-1 sm:w-auto"
           htmlFor="decision-cutoff"
         >
           <Typography variant="small">Cutoff</Typography>
-          <select
+          <SelectField
             id="decision-cutoff"
-            className={inputClass}
             value={cutoff}
             onChange={(event) => setCutoff(event.target.value)}
           >
@@ -91,7 +90,7 @@ export function DecisionTab({
                 {option}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
       </div>
       <Typography variant="bodyMedium">{sentence}</Typography>
@@ -122,8 +121,6 @@ export function DecisionTab({
     </div>
   )
 }
-
-const inputClass = `w-full max-w-full rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink sm:w-auto ${color.focus}`
 
 function DecisionBody({
   data,

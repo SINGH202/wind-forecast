@@ -6,9 +6,11 @@ import { EmptyState } from '../../components/EmptyState.tsx'
 import { ErrorState } from '../../components/ErrorState.tsx'
 import { KpiCard } from '../../components/KpiCard.tsx'
 import { LoadingState } from '../../components/LoadingState.tsx'
+import { SelectField } from '../../components/SelectField.tsx'
 import { Typography } from '../../components/Typography.tsx'
+import { fieldClass } from '../../design/fields.ts'
 import { formatMw, formatPercent } from '../../design/format.ts'
-import { color, space } from '../../design/tokens.ts'
+import { space } from '../../design/tokens.ts'
 import { AccuracyCharts } from './AccuracyCharts.tsx'
 import {
   clampDay,
@@ -56,7 +58,7 @@ export function AccuracyTab({
           <input
             id="accuracy-start"
             type="date"
-            className={inputClass}
+            className={fieldClass}
             min={bounds?.min}
             max={bounds?.max}
             value={startDay}
@@ -71,7 +73,7 @@ export function AccuracyTab({
           <input
             id="accuracy-end"
             type="date"
-            className={inputClass}
+            className={fieldClass}
             min={bounds?.min}
             max={bounds?.max}
             value={endDay}
@@ -83,9 +85,8 @@ export function AccuracyTab({
           htmlFor="accuracy-cutoff"
         >
           <Typography variant="small">Cutoff</Typography>
-          <select
+          <SelectField
             id="accuracy-cutoff"
-            className={inputClass}
             value={cutoff}
             onChange={(event) => setCutoff(event.target.value)}
           >
@@ -94,7 +95,7 @@ export function AccuracyTab({
                 {option}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
       </div>
       <Typography variant="bodyMedium">
@@ -121,8 +122,6 @@ export function AccuracyTab({
     </div>
   )
 }
-
-const inputClass = `w-full max-w-full rounded-md border border-line bg-paper px-2 py-1 text-sm text-ink sm:w-auto ${color.focus}`
 
 type MetricsBodyProps = {
   isLoading: boolean
